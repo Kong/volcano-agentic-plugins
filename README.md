@@ -8,12 +8,28 @@ settings) but never re-implement Volcano's behavior. The action surface stays
 the CLI; the agent content (skills, `AGENTS.md`, safety model) is **fetched at
 runtime** from a configurable origin and is never bundled.
 
-## Packages
+## Layout
 
-| Package | Description |
-| --- | --- |
-| [`@volcano-plugins/core`](packages/core) | Shared TS helpers: base-URL resolution, CLI runner, runtime content fetcher. |
-| [`@volcano-plugins/vscode`](packages/vscode-volcano) | VS Code / Cursor extension (`.vsix`). |
+```
+packages/   shared libraries (reused by every plugin)
+plugins/    publishable, per-IDE plugins (one directory per IDE)
+```
+
+| Workspace | Path | Description |
+| --- | --- | --- |
+| `@volcano-plugins/core` | `packages/core` | Shared TS helpers: base-URL resolution, CLI runner, runtime content fetcher. |
+| `volcano` (VS Code/Cursor) | `plugins/vscode` | VS Code-family extension (`.vsix`), also installs in Cursor. |
+
+Planned plugins (not yet built): `plugins/claude-code` (Claude Code plugin),
+and thin config wrappers for Codex / opencode if they ever justify it.
+
+## Adding a new IDE plugin
+
+1. Create `plugins/<ide>/` with its own `package.json` (workspace member).
+2. Depend on `@volcano-plugins/core` (`"workspace:*"`) for base-URL/CLI/content
+   logic — do not re-implement it.
+3. Keep it a thin shell: drive the CLI, fetch content at runtime, expose a
+   configurable base URL.
 
 ## Design rules (enforced in review)
 
@@ -35,13 +51,13 @@ enhancement, never a prerequisite.
 
 ```sh
 pnpm install
-pnpm build       # build all packages
-pnpm typecheck   # typecheck all packages
+pnpm build       # build all packages + plugins
+pnpm typecheck   # typecheck everything
 ```
 
 ## Status
 
-- [x] Monorepo scaffold
+- [x] Monorepo scaffold (`packages/` + `plugins/`)
 - [x] `@volcano-plugins/core`
-- [x] `@volcano-plugins/vscode` (VS Code / Cursor) — scaffold
-- [ ] Claude Code plugin (later)
+- [x] `plugins/vscode` (VS Code / Cursor) — scaffold
+- [ ] `plugins/claude-code` (Claude Code) — later

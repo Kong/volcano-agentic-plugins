@@ -1,2 +1,4 @@
+# Shared libraries live under packages/, publishable per-IDE plugins under plugins/.
 packages:
   - "packages/*"
+  - "plugins/*"

@@ -17,11 +17,11 @@ importers:
 
   packages/core: {}
 
-  packages/vscode-volcano:
+  plugins/vscode:
     dependencies:
       '@volcano-plugins/core':
         specifier: workspace:*
-        version: link:../core
+        version: link:../../packages/core
     devDependencies:
       '@types/vscode':
         specifier: ^1.85.0
