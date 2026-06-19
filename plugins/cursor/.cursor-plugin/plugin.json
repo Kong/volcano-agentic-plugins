@@ -1,0 +1,9 @@
+{
+  "name": "volcano",
+  "description": "Volcano platform rules and skills for Cursor Agent.",
+  "version": "0.0.1",
+  "author": {
+    "name": "Volcano",
+    "email": "support@volcano.dev"
+  }
+}

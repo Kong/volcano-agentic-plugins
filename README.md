@@ -19,12 +19,14 @@ plugins/    publishable, per-IDE plugins (one directory per IDE)
 | --- | --- | --- |
 | `@volcano-plugins/core` | `packages/core` | Shared TS helpers: base-URL resolution, CLI runner, runtime content fetcher. |
 | `volcano` (VS Code) | `plugins/vscode` | VS Code extension (`.vsix` / Open VSX; also Windsurf and other vsix forks). |
+| `volcano` (Cursor) | `plugins/cursor` | Cursor native plugin (`.cursor-plugin/plugin.json` + rules/skills). |
+| `volcano-skills` | `sources/volcano-skills` | Git submodule backing Cursor plugin skills/rules generation. |
 
 Different IDEs use different plugin formats, so each gets its own target:
 
 - **VS Code-family** (`plugins/vscode`) — `.vsix` extension. **Not Cursor.**
-- **Cursor** (`plugins/cursor`, planned) — Cursor's own plugin format
-  (`.cursor-plugin/plugin.json` + rules/skills/commands/hooks/MCP, marketplace).
+- **Cursor** (`plugins/cursor`) — Cursor's own plugin format
+  (`.cursor-plugin/plugin.json` + rules/skills, marketplace). No MCP yet.
 - **Claude Code** (`plugins/claude-code`, planned) — Claude Code plugin.
 - Codex / opencode — AGENTS.md + MCP config via bootstrap; no native plugin planned.
 
@@ -58,6 +60,7 @@ enhancement, never a prerequisite.
 pnpm install
 pnpm build       # build all packages + plugins
 pnpm typecheck   # typecheck everything
+pnpm sync:cursor # regenerate plugins/cursor from sources/volcano-skills
 ```
 
 ## Status
@@ -65,5 +68,5 @@ pnpm typecheck   # typecheck everything
 - [x] Monorepo scaffold (`packages/` + `plugins/`)
 - [x] `@volcano-plugins/core`
 - [x] `plugins/vscode` (VS Code / vsix forks) — scaffold
-- [ ] `plugins/cursor` (Cursor native plugin) — next
+- [x] `plugins/cursor` (Cursor native plugin) — scaffold (rules + skills, no MCP)
 - [ ] `plugins/claude-code` (Claude Code) — later

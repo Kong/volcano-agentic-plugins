@@ -1,0 +1,3 @@
+[submodule "sources/volcano-skills"]
+	path = sources/volcano-skills
+	url = https://github.com/kong/volcano-skills.git

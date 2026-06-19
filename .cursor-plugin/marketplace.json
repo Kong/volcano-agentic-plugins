@@ -1,0 +1,17 @@
+{
+  "name": "volcano-agentic-plugins",
+  "owner": {
+    "name": "Volcano",
+    "email": "support@volcano.dev"
+  },
+  "metadata": {
+    "description": "Volcano plugins for agentic IDEs."
+  },
+  "plugins": [
+    {
+      "name": "volcano",
+      "source": "plugins/cursor",
+      "description": "Volcano platform rules and skills for Cursor Agent."
+    }
+  ]
+}
