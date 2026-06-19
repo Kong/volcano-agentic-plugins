@@ -1,0 +1,80 @@
+{
+  "name": "volcano",
+  "displayName": "Volcano",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Build and deploy apps and AI agents on Volcano — from VS Code and Cursor.",
+  "publisher": "volcano",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "keywords": ["volcano", "serverless", "deploy", "ai agents", "cursor"],
+  "main": "./dist/extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "commands": [
+      {
+        "command": "volcano.startBuilding",
+        "title": "Start Building",
+        "category": "Volcano"
+      },
+      {
+        "command": "volcano.login",
+        "title": "Log In",
+        "category": "Volcano"
+      },
+      {
+        "command": "volcano.status",
+        "title": "Status",
+        "category": "Volcano"
+      },
+      {
+        "command": "volcano.runBootstrap",
+        "title": "Install CLI & Skills (Bootstrap)",
+        "category": "Volcano"
+      },
+      {
+        "command": "volcano.showAgentInstructions",
+        "title": "Show Agent Instructions (AGENTS.md)",
+        "category": "Volcano"
+      }
+    ],
+    "configuration": {
+      "title": "Volcano",
+      "properties": {
+        "volcano.webUrl": {
+          "type": "string",
+          "default": "https://volcano.dev",
+          "markdownDescription": "Base URL for Volcano docs, skills, and `AGENTS.md`. Set to `http://localhost:3000` for local development. Overrides `VOLCANO_WEB_URL`."
+        },
+        "volcano.apiUrl": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Non-production Volcano API URL the CLI should target (e.g. `http://localhost:8000`). Leave empty to use the CLI's built-in production default. Overrides `VOLCANO_API_URL`."
+        },
+        "volcano.cliPath": {
+          "type": "string",
+          "default": "volcano",
+          "description": "Path to the Volcano CLI binary. Use an absolute path if it is not on PATH."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node esbuild.mjs --production",
+    "watch": "node esbuild.mjs --watch",
+    "package": "vsce package --no-dependencies -o volcano.vsix",
+    "clean": "rm -rf dist *.vsix *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@volcano-plugins/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.23.0"
+  }
+}
