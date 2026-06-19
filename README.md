@@ -18,10 +18,15 @@ plugins/    publishable, per-IDE plugins (one directory per IDE)
 | Workspace | Path | Description |
 | --- | --- | --- |
 | `@volcano-plugins/core` | `packages/core` | Shared TS helpers: base-URL resolution, CLI runner, runtime content fetcher. |
-| `volcano` (VS Code/Cursor) | `plugins/vscode` | VS Code-family extension (`.vsix`), also installs in Cursor. |
+| `volcano` (VS Code) | `plugins/vscode` | VS Code extension (`.vsix` / Open VSX; also Windsurf and other vsix forks). |
 
-Planned plugins (not yet built): `plugins/claude-code` (Claude Code plugin),
-and thin config wrappers for Codex / opencode if they ever justify it.
+Different IDEs use different plugin formats, so each gets its own target:
+
+- **VS Code-family** (`plugins/vscode`) — `.vsix` extension. **Not Cursor.**
+- **Cursor** (`plugins/cursor`, planned) — Cursor's own plugin format
+  (`.cursor-plugin/plugin.json` + rules/skills/commands/hooks/MCP, marketplace).
+- **Claude Code** (`plugins/claude-code`, planned) — Claude Code plugin.
+- Codex / opencode — AGENTS.md + MCP config via bootstrap; no native plugin planned.
 
 ## Adding a new IDE plugin
 
@@ -59,5 +64,6 @@ pnpm typecheck   # typecheck everything
 
 - [x] Monorepo scaffold (`packages/` + `plugins/`)
 - [x] `@volcano-plugins/core`
-- [x] `plugins/vscode` (VS Code / Cursor) — scaffold
+- [x] `plugins/vscode` (VS Code / vsix forks) — scaffold
+- [ ] `plugins/cursor` (Cursor native plugin) — next
 - [ ] `plugins/claude-code` (Claude Code) — later
