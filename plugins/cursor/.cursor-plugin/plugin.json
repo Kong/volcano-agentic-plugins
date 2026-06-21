@@ -7,5 +7,6 @@
     "email": "support@volcano.dev"
   },
   "rules": "./rules/",
+  "skills": "./skills/",
   "commands": "./commands/"
 }

@@ -5,11 +5,14 @@ alwaysApply: true
 
 # Volcano
 
-Volcano is a serverless JavaScript platform for building and deploying apps and AI agents.
+Volcano is a serverless platform for building and deploying apps and AI agents.
 
-This plugin intentionally does **not** embed Volcano skills or safety instructions. The canonical source is:
+This plugin exposes Volcano skills through `skills/`, which is a symlink to the canonical `sources/volcano-skills` submodule. It does not copy or fork the skill content.
 
-- Local canonical install: `~/.volcano/AGENTS.md` and `~/.volcano/skills/*/SKILL.md`
+Canonical sources:
+
+- Plugin skills symlink: `plugins/cursor/skills -> ../../sources/volcano-skills`
+- Local runtime install: `~/.volcano/AGENTS.md` and `~/.volcano/skills/*/SKILL.md`
 - Source repository: `https://github.com/Kong/volcano-skills`
 - Default web origin: `https://volcano.dev`
 
@@ -29,7 +32,7 @@ This plugin intentionally does **not** embed Volcano skills or safety instructio
    ```
 
 3. Read `~/.volcano/AGENTS.md` before taking Volcano actions.
-4. Use the canonical skills in `~/.volcano/skills/` when relevant (`volcano-platform`, `volcano-sdk`, `volcano-functions`, etc.).
+4. Use the canonical plugin skills when relevant (`volcano-platform`, `volcano-sdk`, `volcano-functions`, etc.).
 5. Prefer the `volcano` CLI for Volcano actions. Use `volcano <area> --help` and `--json` where useful.
 
 ## Safety

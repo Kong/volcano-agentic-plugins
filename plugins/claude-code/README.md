@@ -2,55 +2,56 @@
 
 Native Claude Code plugin for Volcano.
 
-This plugin is intentionally **pointer-only**:
+This plugin exposes Volcano's canonical skills without copying them:
 
-- It does **not** copy Volcano's canonical `SKILL.md` files.
-- It does **not** copy `AGENTS.md` / `CLAUDE.md`.
-- It does **not** include MCP config yet; Volcano does not currently ship MCP.
+```txt
+skills -> ../../sources/volcano-skills
+```
 
-Instead, it provides one namespaced Claude Code skill:
+So Claude Code sees namespaced skills such as:
+
+```text
+/volcano:volcano-platform
+/volcano:volcano-sdk
+/volcano:volcano-functions
+```
+
+The canonical source of truth remains the `sources/volcano-skills` submodule
+(`https://github.com/Kong/volcano-skills`).
+
+The plugin also includes a local setup command:
 
 ```text
 /volcano:install-volcano
 ```
 
-That skill installs/refreshes the canonical runtime source:
+This command installs/refreshes the runtime copy used by Claude Code sessions:
 
 - `~/.volcano/AGENTS.md`
 - `~/.volcano/skills/*/SKILL.md`
 
-The canonical source of truth is the `sources/volcano-skills` submodule
-(`https://github.com/Kong/volcano-skills`).
+There is intentionally **no MCP config yet**; Volcano does not currently ship MCP.
 
 ## Structure
 
 ```txt
 plugins/claude-code/
 ├── .claude-plugin/plugin.json
-└── skills/
-    └── install-volcano/
-        └── SKILL.md
-```
-
-Claude Code plugin skills are namespaced by plugin name, so the skill is invoked
-as:
-
-```text
-/volcano:install-volcano
+├── commands/
+│   └── install-volcano.md
+└── skills -> ../../sources/volcano-skills
 ```
 
 ## Local testing
 
-Claude Code plugins can be tested locally from a plugin directory. From this
-repo, run Claude Code's plugin validator if available:
+Validate the plugin:
 
 ```sh
 claude plugin validate plugins/claude-code
 ```
 
-Then install via Claude Code's local/plugin flow (or add this plugin repo to a
-marketplace once published). If your Claude Code version supports local plugin
-installation by path, install `plugins/claude-code`.
+If your Claude Code version supports local plugin installation by path, install
+`plugins/claude-code`. Otherwise use Claude Code's marketplace/local plugin flow.
 
 ## Marketplace
 
@@ -65,9 +66,21 @@ Before submitting, run:
 claude plugin validate plugins/claude-code
 ```
 
-## Why no embedded Volcano skills?
+## Symlink caveat
 
-A Claude Code plugin can embed `skills/*/SKILL.md`, but doing so would duplicate
-canonical content and drift as we add plugins for more IDEs. The monorepo rule is:
-**canonical content lives once in `sources/volcano-skills`; plugin directories are
-adapters that point at it.**
+The plugin depends on the `sources/volcano-skills` submodule being available.
+For local development, clone with submodules:
+
+```sh
+git clone --recurse-submodules <repo>
+```
+
+or initialize after clone:
+
+```sh
+git submodule update --init --recursive
+```
+
+If a marketplace/indexer does not follow symlinks into submodules, we'll need a
+publish-time materialization step or a marketplace source rooted at
+`volcano-skills` itself.

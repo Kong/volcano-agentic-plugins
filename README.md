@@ -19,18 +19,18 @@ plugins/    publishable, per-IDE plugins (one directory per IDE)
 | --- | --- | --- |
 | `@volcano-plugins/core` | `packages/core` | Shared TS helpers: base-URL resolution, CLI runner, runtime content fetcher. |
 | `volcano` (VS Code) | `plugins/vscode` | VS Code extension (`.vsix` / Open VSX; also Windsurf and other vsix forks). |
-| `volcano` (Cursor) | `plugins/cursor` | Cursor native plugin (`.cursor-plugin/plugin.json` + pointer rules/commands). |
-| `volcano` (Claude Code) | `plugins/claude-code` | Claude Code plugin (`.claude-plugin/plugin.json` + pointer skill). |
+| `volcano` (Cursor) | `plugins/cursor` | Cursor native plugin (`.cursor-plugin/plugin.json` + symlinked skills/rules/commands). |
+| `volcano` (Claude Code) | `plugins/claude-code` | Claude Code plugin (`.claude-plugin/plugin.json` + symlinked skills/command). |
 | `volcano-skills` | `sources/volcano-skills` | Canonical agent instructions and skills source (git submodule). |
 
 Different IDEs use different plugin formats, so each gets its own target:
 
 - **VS Code-family** (`plugins/vscode`) — `.vsix` extension. **Not Cursor.**
 - **Cursor** (`plugins/cursor`) — Cursor's own plugin format
-  (`.cursor-plugin/plugin.json` + rules/commands). It points to the canonical
-  `sources/volcano-skills` / `~/.volcano` install instead of copying skills.
+  (`.cursor-plugin/plugin.json` + rules/commands + `skills` symlink). It exposes
+  canonical skills via `plugins/cursor/skills -> ../../sources/volcano-skills`.
   No MCP yet.
-- **Claude Code** (`plugins/claude-code`) — Claude Code plugin with a namespaced pointer skill (`/volcano:install-volcano`).
+- **Claude Code** (`plugins/claude-code`) — Claude Code plugin with canonical skills exposed via `skills -> ../../sources/volcano-skills` and setup command `/volcano:install-volcano`.
 - Codex / opencode — AGENTS.md + MCP config via bootstrap; no native plugin planned.
 
 ## Adding a new IDE plugin
@@ -45,9 +45,9 @@ Different IDEs use different plugin formats, so each gets its own target:
 
 A plugin in this repo **must not**:
 
-1. **Bundle content** — skills, `AGENTS.md`, command surface, or safety text.
-   Keep canonical content only in `sources/volcano-skills`; plugins point at it
-   or fetch/install it at runtime.
+1. **Copy content** — skills, `AGENTS.md`, command surface, or safety text.
+   Keep canonical content only in `sources/volcano-skills`; plugins expose it by
+   symlink when an IDE requires local skill files, or fetch/install it at runtime.
 2. **Re-implement a CLI command** — drive the `volcano` binary instead.
 3. **Hardcode a non-overridable origin** — honor `volcano.webUrl` / `volcano.apiUrl`
    (and `VOLCANO_WEB_URL` / `VOLCANO_API_URL`) so localhost dev and prod both work.
@@ -72,5 +72,5 @@ pnpm check:no-content-duplicates # verify plugins do not copy canonical content
 - [x] Monorepo scaffold (`packages/` + `plugins/`)
 - [x] `@volcano-plugins/core`
 - [x] `plugins/vscode` (VS Code / vsix forks) — scaffold
-- [x] `plugins/cursor` (Cursor native plugin) — scaffold (pointer rule + command, no MCP)
-- [x] `plugins/claude-code` (Claude Code) — scaffold (pointer skill, no MCP)
+- [x] `plugins/cursor` (Cursor native plugin) — scaffold (symlinked skills + rule/command, no MCP)
+- [x] `plugins/claude-code` (Claude Code) — scaffold (symlinked skills + setup command, no MCP)

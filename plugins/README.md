@@ -10,9 +10,9 @@ Each IDE uses a different plugin format, so each gets its own directory.
 | Plugin | IDE(s) | Format | Status |
 | --- | --- | --- | --- |
 | [`vscode`](vscode) | VS Code, Windsurf, vsix/Open VSX forks | `.vsix` extension | scaffold |
-| [`cursor`](cursor) | Cursor | `.cursor-plugin/plugin.json` + pointer rules/commands | scaffold |
-| [`claude-code`](claude-code) | Claude Code | `.claude-plugin/plugin.json` + pointer skill | scaffold |
+| [`cursor`](cursor) | Cursor | `.cursor-plugin/plugin.json` + symlinked skills/rules/commands | scaffold |
+| [`claude-code`](claude-code) | Claude Code | `.claude-plugin/plugin.json` + symlinked skills/command | scaffold |
 
 > **Cursor is not a vsix host.** Do not point Cursor users at `vscode`.
 > The Cursor plugin has no MCP config yet because Volcano does not currently ship an MCP server.
-> Cursor and Claude Code plugins do not embed canonical Volcano skills; canonical content lives in `../sources/volcano-skills`.
+> Cursor and Claude Code plugins do not copy canonical Volcano skills; they expose `../sources/volcano-skills` by symlink.
