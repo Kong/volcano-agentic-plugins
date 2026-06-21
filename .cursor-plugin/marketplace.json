@@ -11,7 +11,7 @@
     {
       "name": "volcano",
       "source": "plugins/cursor",
-      "description": "Volcano platform pointer rule and setup command for Cursor Agent."
+      "description": "Volcano platform rules and skills for Cursor Agent."
     }
   ]
 }
