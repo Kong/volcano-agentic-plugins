@@ -1,0 +1,12 @@
+{
+  "name": "volcano",
+  "description": "Volcano CLI setup and canonical skills pointer for Claude Code.",
+  "version": "0.0.1",
+  "author": {
+    "name": "Volcano",
+    "email": "support@volcano.dev"
+  },
+  "homepage": "https://volcano.dev",
+  "repository": "https://github.com/Kong/volcano-agentic-plugins",
+  "license": "MIT"
+}

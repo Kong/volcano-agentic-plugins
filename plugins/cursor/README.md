@@ -4,26 +4,37 @@ Native Cursor plugin for Volcano. This is **not** a VS Code `.vsix` extension;
 Cursor plugins use `.cursor-plugin/plugin.json` plus components discovered from
 `rules/`, `skills/`, `commands/`, `hooks/`, and `mcp.json`.
 
-This plugin currently ships:
+This plugin is intentionally **pointer-only**:
 
-- `rules/volcano.mdc` — always-applied Volcano CLI-first rules and safety model,
-  generated from `sources/volcano-skills/AGENTS.md`.
-- `skills/*/SKILL.md` — Volcano platform skills, generated from the
-  `sources/volcano-skills` submodule.
-- `assets/` — canonical `AGENTS.md`, `CLAUDE.md`, and `index.json` snapshots for
-  traceability.
+- It does **not** copy `SKILL.md` files.
+- It does **not** copy `AGENTS.md` / `CLAUDE.md`.
+- It does **not** include MCP config yet; Volcano does not currently ship MCP.
 
-There is intentionally **no MCP config yet**; Volcano does not currently ship an
-MCP server.
+Instead, it points Cursor Agent at the canonical install/source:
 
-## Source of truth
+- Runtime install: `~/.volcano/AGENTS.md` and `~/.volcano/skills/*/SKILL.md`
+- Source of truth: `sources/volcano-skills` (`https://github.com/kong/volcano-skills`)
+- Bootstrap: `https://volcano.dev/bootstrap.sh`
 
-The canonical skills source is the `sources/volcano-skills` git submodule
-(`https://github.com/kong/volcano-skills`). To refresh this plugin after that
-submodule changes:
+## Components
+
+| Path | Purpose |
+| --- | --- |
+| `.cursor-plugin/plugin.json` | Cursor plugin manifest. |
+| `rules/volcano.mdc` | Always-applied pointer rule: install/read canonical Volcano instructions and skills before Volcano work. |
+| `commands/install-volcano.md` | Agent-executable command to install/refresh Volcano CLI + canonical skills. |
+
+## Why no embedded skills?
+
+A Cursor plugin can embed `skills/*/SKILL.md`, but doing so would duplicate the
+canonical source and eventually drift as we add more IDE plugins. The monorepo
+rule is: **canonical content lives once in `sources/volcano-skills`; plugin
+directories are adapters that point at it.**
+
+The root repo includes a guard:
 
 ```sh
-pnpm sync:cursor
+pnpm check:no-content-duplicates
 ```
 
 ## Test locally in Cursor
@@ -36,8 +47,7 @@ ln -s /Users/ted.kim/workspace/volcano-agentic-plugins/plugins/cursor \
   ~/.cursor/plugins/local/volcano
 ```
 
-Then restart Cursor or run **Developer: Reload Window**. The plugin should appear
-with its rule and skills in Cursor's Rules/Skills settings.
+Then restart Cursor or run **Developer: Reload Window**.
 
 ## Marketplace
 
@@ -48,4 +58,6 @@ This repo is a multi-plugin repository. The marketplace manifest is at:
 ```
 
 Cursor Marketplace / Team Marketplace auto-refresh should track this repository
-and pick up changes pushed to the tracked branch.
+and pick up changes pushed to the tracked branch. Since this plugin is
+pointer-only, marketplace refresh updates plugin wiring, while canonical skill
+content remains in `volcano-skills` and is installed/refreshed via bootstrap.

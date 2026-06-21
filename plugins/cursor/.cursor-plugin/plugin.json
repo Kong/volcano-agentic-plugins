@@ -1,9 +1,11 @@
 {
   "name": "volcano",
-  "description": "Volcano platform rules and skills for Cursor Agent.",
+  "description": "Volcano platform rules and setup command for Cursor Agent.",
   "version": "0.0.1",
   "author": {
     "name": "Volcano",
     "email": "support@volcano.dev"
-  }
+  },
+  "rules": "./rules/",
+  "commands": "./commands/"
 }

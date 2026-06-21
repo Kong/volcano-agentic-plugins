@@ -12,7 +12,7 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "clean": "pnpm -r clean",
-    "sync:cursor": "node scripts/sync-cursor-plugin.mjs"
+    "check:no-content-duplicates": "node scripts/check-no-content-duplicates.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
