@@ -35,6 +35,9 @@ jobs:
       - name: Check plugins do not copy canonical content
         run: pnpm check:no-content-duplicates
 
+      - name: Smoke-test Claude Desktop extension
+        run: pnpm check:claude-desktop
+
       - name: Typecheck
         run: pnpm -r typecheck
 

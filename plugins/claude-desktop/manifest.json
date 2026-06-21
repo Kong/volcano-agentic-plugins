@@ -1,0 +1,60 @@
+{
+  "manifest_version": "0.3",
+  "name": "volcano",
+  "display_name": "Volcano",
+  "version": "0.0.1",
+  "description": "Volcano setup and canonical agent instructions for Claude Desktop.",
+  "long_description": "A lightweight Claude Desktop extension that exposes Volcano setup guidance and canonical agent instructions. It does not implement the full Volcano MCP action surface yet.",
+  "author": {
+    "name": "Volcano",
+    "email": "support@volcano.dev",
+    "url": "https://volcano.dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kong/volcano-agentic-plugins.git"
+  },
+  "homepage": "https://volcano.dev",
+  "documentation": "https://volcano.dev/startbuilding",
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "VOLCANO_WEB_URL": "${user_config.web_url}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "volcano_setup_instructions",
+      "description": "Return the canonical command for installing or refreshing Volcano CLI, AGENTS.md, and skills."
+    },
+    {
+      "name": "volcano_agent_instructions",
+      "description": "Return the canonical Volcano agent instructions from this extension's skills submodule."
+    },
+    {
+      "name": "volcano_skill_index",
+      "description": "List the canonical Volcano skills included via the skills submodule."
+    }
+  ],
+  "tools_generated": false,
+  "user_config": {
+    "web_url": {
+      "type": "string",
+      "title": "Volcano Web URL",
+      "description": "Origin for Volcano bootstrap/docs/skills. Use http://localhost:3000 for local Volcano web development.",
+      "default": "https://volcano.dev",
+      "required": true
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}

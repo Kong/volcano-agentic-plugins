@@ -21,6 +21,7 @@ plugins/    publishable, per-IDE plugins (one directory per IDE)
 | `volcano` (VS Code) | `plugins/vscode` | VS Code extension (`.vsix` / Open VSX; also Windsurf and other vsix forks). |
 | `volcano` (Cursor) | `plugins/cursor` | Cursor native plugin (`.cursor-plugin/plugin.json` + skills submodule/rules/commands). |
 | `volcano` (Claude Code) | `plugins/claude-code` | Claude Code plugin (`.claude-plugin/plugin.json` + skills submodule/command). |
+| `volcano` (Claude Desktop) | `plugins/claude-desktop` | Claude Desktop Extension / MCP Bundle (`manifest.json` + local setup/instruction MCP server). |
 | `volcano-skills` | `plugins/*/skills` | Canonical Volcano agent instructions and skills, vendored as plugin-local git submodules. |
 
 Different IDEs use different plugin formats, so each gets its own target:
@@ -31,6 +32,7 @@ Different IDEs use different plugin formats, so each gets its own target:
   canonical skills via `plugins/cursor/skills`.
   No MCP yet.
 - **Claude Code** (`plugins/claude-code`) — Claude Code plugin with canonical skills exposed via `plugins/claude-code/skills` and setup command `/volcano:install-volcano`.
+- **Claude Desktop** (`plugins/claude-desktop`) — Desktop Extension / MCP Bundle scaffold with a local setup/instruction MCP server and canonical skills in `plugins/claude-desktop/skills`. This is not the full Volcano MCP action surface yet.
 - Codex / opencode — AGENTS.md + MCP config via bootstrap; no native plugin planned.
 
 ## Adding a new IDE plugin
@@ -80,3 +82,4 @@ pnpm check:no-content-duplicates # verify plugins do not copy canonical content
 - [x] `plugins/vscode` (VS Code / vsix forks) — scaffold
 - [x] `plugins/cursor` (Cursor native plugin) — scaffold (skills submodule + rule/command, no MCP)
 - [x] `plugins/claude-code` (Claude Code) — scaffold (skills submodule + setup command, no MCP)
+- [x] `plugins/claude-desktop` (Claude Desktop) — scaffold (MCPB setup/instruction server + skills submodule)

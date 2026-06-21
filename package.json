@@ -13,7 +13,8 @@
     "typecheck": "pnpm -r typecheck",
     "clean": "pnpm -r clean",
     "check:no-content-duplicates": "node scripts/check-no-content-duplicates.mjs",
-    "check:skill-submodules": "node scripts/check-skill-submodules.mjs"
+    "check:skill-submodules": "node scripts/check-skill-submodules.mjs",
+    "check:claude-desktop": "node scripts/check-claude-desktop.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
