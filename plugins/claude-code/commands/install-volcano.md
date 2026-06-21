@@ -9,7 +9,7 @@ allowed-tools: Bash, Read
 
 Use this command when the user asks to install, refresh, or set up Volcano in Claude Code.
 
-The plugin's `skills/` directory is a symlink to the canonical `sources/volcano-skills` submodule. The runtime installation still goes through bootstrap so the user's Claude Code environment gets `~/.volcano/AGENTS.md` and `~/.volcano/skills/*/SKILL.md`.
+The plugin's `skills/` directory is a plugin-local git submodule pointing at `https://github.com/Kong/volcano-skills`. The runtime installation still goes through bootstrap so the user's Claude Code environment gets `~/.volcano/AGENTS.md` and `~/.volcano/skills/*/SKILL.md`.
 
 If the user passes `--local` or explicitly says they are developing Volcano locally, use the local web origin:
 

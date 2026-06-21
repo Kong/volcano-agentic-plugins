@@ -5,7 +5,7 @@ Native Claude Code plugin for Volcano.
 This plugin exposes Volcano's canonical skills without copying them:
 
 ```txt
-skills -> ../../sources/volcano-skills
+plugins/claude-code/skills  # git submodule: https://github.com/kong/volcano-skills.git
 ```
 
 So Claude Code sees namespaced skills such as:
@@ -15,9 +15,6 @@ So Claude Code sees namespaced skills such as:
 /volcano:volcano-sdk
 /volcano:volcano-functions
 ```
-
-The canonical source of truth remains the `sources/volcano-skills` submodule
-(`https://github.com/Kong/volcano-skills`).
 
 The plugin also includes a local setup command:
 
@@ -39,10 +36,16 @@ plugins/claude-code/
 ├── .claude-plugin/plugin.json
 ├── commands/
 │   └── install-volcano.md
-└── skills -> ../../sources/volcano-skills
+└── skills/  # git submodule: volcano-skills
 ```
 
 ## Local testing
+
+Use a clone with submodules initialized:
+
+```sh
+git submodule update --init --recursive
+```
 
 Validate the plugin:
 
@@ -66,21 +69,8 @@ Before submitting, run:
 claude plugin validate plugins/claude-code
 ```
 
-## Symlink caveat
+## Submodule caveat
 
-The plugin depends on the `sources/volcano-skills` submodule being available.
-For local development, clone with submodules:
-
-```sh
-git clone --recurse-submodules <repo>
-```
-
-or initialize after clone:
-
-```sh
-git submodule update --init --recursive
-```
-
-If a marketplace/indexer does not follow symlinks into submodules, we'll need a
-publish-time materialization step or a marketplace source rooted at
-`volcano-skills` itself.
+The plugin depends on `plugins/claude-code/skills` being initialized. If a
+marketplace or indexer does not clone submodules, we'll need a publish-time
+materialization step or a marketplace source rooted at `volcano-skills` itself.
