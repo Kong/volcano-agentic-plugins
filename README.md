@@ -63,7 +63,7 @@ enhancement, never a prerequisite.
 
 ## Toolchain
 
-- Node ≥ 20 (Node 24 recommended), pnpm ≥ 9
+- Node ≥ 24, pnpm ≥ 9
 - TypeScript, esbuild for extension bundling
 
 ```sh
