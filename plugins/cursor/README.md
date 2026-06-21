@@ -12,8 +12,8 @@ plugins/cursor/skills  # git submodule: https://github.com/kong/volcano-skills.g
 
 The plugin also includes:
 
-- `rules/volcano.mdc` — always-applied Volcano rule pointing at canonical runtime instructions.
-- `commands/install-volcano.md` — agent-executable command to install/refresh Volcano CLI + canonical skills.
+- `rules/volcano.mdc` — always-applied Volcano rule pointing at plugin-shipped Volcano instructions.
+- `commands/install-volcano.md` — `/install-volcano` command to install or upgrade the Volcano CLI. The plugin already ships the skills, so this command does not download skills into `~/.volcano/skills`.
 
 There is intentionally **no MCP config yet**; Volcano does not currently ship MCP.
 
@@ -23,8 +23,8 @@ There is intentionally **no MCP config yet**; Volcano does not currently ship MC
 | --- | --- |
 | `.cursor-plugin/plugin.json` | Cursor plugin manifest. |
 | `skills/` | Plugin-local git submodule for canonical Volcano skills. |
-| `rules/volcano.mdc` | Always-applied rule: install/read canonical Volcano instructions and skills before Volcano work. |
-| `commands/install-volcano.md` | Agent-executable command to install/refresh Volcano CLI + canonical skills. |
+| `rules/volcano.mdc` | Always-applied rule: read plugin-shipped Volcano instructions and skills before Volcano work. |
+| `commands/install-volcano.md` | `/install-volcano` command to install or upgrade the Volcano CLI without downloading runtime skills. |
 
 ## Why a plugin-local skills submodule?
 

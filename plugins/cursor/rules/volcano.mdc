@@ -1,5 +1,5 @@
 ---
-description: Volcano platform pointer rule — load canonical instructions and skills before Volcano work
+description: Volcano platform pointer rule — load plugin-shipped instructions and skills before Volcano work
 alwaysApply: true
 ---
 
@@ -12,29 +12,15 @@ This plugin exposes Volcano skills through `plugins/cursor/skills`, a plugin-loc
 Canonical sources:
 
 - Plugin skills submodule: `plugins/cursor/skills`
-- Local runtime install: `~/.volcano/AGENTS.md` and `~/.volcano/skills/*/SKILL.md`
 - Source repository: `https://github.com/Kong/volcano-skills`
 - Default web origin: `https://volcano.dev`
 
 ## Before any Volcano work
 
-1. Check whether `~/.volcano/AGENTS.md` exists and is non-empty.
-2. If it is missing, install/refresh the canonical instructions and skills with:
-
-   ```sh
-   curl -fsSL "https://volcano.dev/bootstrap.sh" -o /tmp/volcano-bootstrap.sh && sh /tmp/volcano-bootstrap.sh --apply --agent cursor
-   ```
-
-   For local Volcano web development, use the localhost origin explicitly:
-
-   ```sh
-   export VOLCANO_WEB_URL=http://localhost:3000 && curl -fsSL "http://localhost:3000/bootstrap.sh" -o /tmp/volcano-bootstrap.sh && sh /tmp/volcano-bootstrap.sh --apply --agent cursor
-   ```
-
-3. Read `~/.volcano/AGENTS.md` before taking Volcano actions.
-4. Use the canonical plugin skills when relevant (`volcano-platform`, `volcano-sdk`, `volcano-functions`, etc.).
-5. Prefer the `volcano` CLI for Volcano actions. Use `volcano <area> --help` and `--json` where useful.
+1. Use the plugin-shipped `AGENTS.md` and `volcano-*` skills from this plugin's `skills/` directory.
+2. If the `volcano` CLI is missing or stale, run `/install-volcano`. That command installs the CLI if missing or runs `volcano upgrade` if already installed. It does not download skills into `~/.volcano/skills`.
+3. Prefer the `volcano` CLI for Volcano actions. Use `volcano <area> --help` and `--json` where useful.
 
 ## Safety
 
-Follow the safety model in `~/.volcano/AGENTS.md`. In particular, production deploys, deletions, secret/variable changes, permission/visibility changes, custom domains, and billing/account changes require explicit user confirmation.
+Follow the safety model in the plugin-shipped `AGENTS.md`. In particular, production deploys, deletions, secret/variable changes, permission/visibility changes, custom domains, and billing/account changes require explicit user confirmation.

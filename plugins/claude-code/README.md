@@ -22,10 +22,7 @@ The plugin also includes a local setup command:
 /volcano:install-volcano
 ```
 
-This command installs/refreshes the runtime copy used by Claude Code sessions:
-
-- `~/.volcano/AGENTS.md`
-- `~/.volcano/skills/*/SKILL.md`
+This command installs or upgrades the Volcano CLI. The plugin already ships `AGENTS.md` and skills, so setup does not download skills into `~/.volcano/skills`.
 
 There is intentionally **no MCP config yet**; Volcano does not currently ship MCP.
 

@@ -41,6 +41,9 @@ jobs:
       - name: Smoke-test Codex plugin
         run: pnpm check:codex
 
+      - name: Check install entrypoints
+        run: pnpm check:install-entrypoints
+
       - name: Typecheck
         run: pnpm -r typecheck
 

@@ -31,11 +31,15 @@ const responses = result.stdout
 if (responses.length !== 3) throw new Error(`Expected 3 MCP responses, got ${responses.length}`);
 if (!responses[0].result?.capabilities?.tools) throw new Error("initialize response missing tools capability");
 const tools = responses[1].result?.tools?.map((tool) => tool.name) ?? [];
-for (const tool of ["volcano_setup_instructions", "volcano_agent_instructions", "volcano_skill_index"]) {
+for (const tool of ["install-volcano", "volcano_setup_instructions", "volcano_agent_instructions", "volcano_skill_index"]) {
   if (!tools.includes(tool)) throw new Error(`tools/list missing ${tool}`);
 }
-if (!responses[2].result?.content?.[0]?.text?.includes("bootstrap.sh")) {
-  throw new Error("volcano_setup_instructions did not return bootstrap instructions");
+const setupText = responses[2].result?.content?.[0]?.text ?? "";
+if (!setupText.includes("volcano upgrade")) {
+  throw new Error("volcano_setup_instructions did not return CLI upgrade instructions");
+}
+if (setupText.includes("bootstrap.sh")) {
+  throw new Error("volcano_setup_instructions must not run full bootstrap");
 }
 
 execFileSync("git", ["ls-files", "--stage", "plugins/claude-desktop/skills"], { stdio: "pipe" });

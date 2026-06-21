@@ -31,8 +31,8 @@
         "category": "Volcano"
       },
       {
-        "command": "volcano.runBootstrap",
-        "title": "Install CLI & Skills (Bootstrap)",
+        "command": "volcano.installVolcano",
+        "title": "Install Volcano",
         "category": "Volcano"
       },
       {

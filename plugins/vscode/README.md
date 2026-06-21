@@ -11,10 +11,10 @@ skills, `AGENTS.md`, or safety text.
 
 | Command | What it does |
 | --- | --- |
-| `Volcano: Start Building` | Quick menu: open the guide, bootstrap, or log in. |
+| `Volcano: Start Building` | Quick menu: open the guide, install/upgrade the CLI, or log in. |
 | `Volcano: Log In` | Runs `volcano login` (device flow) in a terminal. |
 | `Volcano: Status` | Runs `volcano status` and prints to the Volcano output channel. |
-| `Volcano: Install CLI & Skills (Bootstrap)` | Runs the bootstrap script from the configured origin. |
+| `Volcano: Install Volcano` | Runs `volcano upgrade` if the CLI exists; otherwise downloads the latest CLI. |
 | `Volcano: Show Agent Instructions (AGENTS.md)` | Fetches `AGENTS.md` live from the configured origin. |
 
 ## Settings

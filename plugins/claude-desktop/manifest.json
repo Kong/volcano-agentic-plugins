@@ -29,8 +29,12 @@
   },
   "tools": [
     {
+      "name": "install-volcano",
+      "description": "Return the one-step Volcano CLI install/upgrade command for Claude Desktop."
+    },
+    {
       "name": "volcano_setup_instructions",
-      "description": "Return the canonical command for installing or refreshing Volcano CLI, AGENTS.md, and skills."
+      "description": "Return the canonical command for installing or upgrading the Volcano CLI."
     },
     {
       "name": "volcano_agent_instructions",

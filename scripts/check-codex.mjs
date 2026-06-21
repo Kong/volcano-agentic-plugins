@@ -20,4 +20,11 @@ if (entry.interface?.displayName !== "Volcano") throw new Error("Codex marketpla
 const gitlink = execFileSync("git", ["ls-files", "--stage", "plugins/codex/skills"], { encoding: "utf8" });
 if (!gitlink.startsWith("160000 ")) throw new Error("plugins/codex/skills must be a git submodule");
 
+const installSkill = readFileSync("plugins/codex/skills/install-volcano/SKILL.md", "utf8");
+if (!installSkill.includes("name: install-volcano")) throw new Error("Codex skills submodule must expose install-volcano skill");
+if (!installSkill.includes("volcano upgrade")) throw new Error("Codex install-volcano skill must upgrade an existing CLI");
+if (installSkill.includes("bootstrap.sh") || installSkill.includes("--agent codex")) {
+  throw new Error("Codex install-volcano skill must not run full bootstrap or wire agent configs");
+}
+
 console.log("Codex plugin manifest/marketplace smoke test passed.");

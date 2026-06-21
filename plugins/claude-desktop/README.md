@@ -18,7 +18,8 @@ plugins/claude-desktop/
 
 | Tool | Purpose |
 | --- | --- |
-| `volcano_setup_instructions` | Returns the bootstrap command for installing/refreshing Volcano CLI, `AGENTS.md`, and skills. |
+| `install-volcano` | One-step alias returning the Volcano CLI install/upgrade command. |
+| `volcano_setup_instructions` | Returns the CLI install/upgrade command. This does not download skills into `~/.volcano/skills`. |
 | `volcano_agent_instructions` | Returns canonical `AGENTS.md` from the `skills` submodule. |
 | `volcano_skill_index` | Lists canonical Volcano skills from the `skills` submodule. |
 

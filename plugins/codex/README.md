@@ -3,13 +3,15 @@
 Native Codex plugin for Volcano.
 
 Codex plugins use `.codex-plugin/plugin.json` and can include `skills/`, hooks,
-apps/connectors, and MCP config. This plugin currently ships **skills only**:
+apps/connectors, and MCP config. This plugin currently ships **skills only**, including the canonical `/install-volcano` skill:
 
 ```txt
 plugins/codex/
 ├── .codex-plugin/plugin.json
 └── skills/  # git submodule: https://github.com/kong/volcano-skills.git
 ```
+
+Use `/install-volcano` in Codex to install or upgrade the Volcano CLI. The plugin already ships `AGENTS.md` and skills, so this command does not download skills into `~/.volcano/skills`.
 
 There is intentionally **no MCP config yet**; Volcano does not currently ship MCP.
 
