@@ -1,0 +1,13 @@
+{
+  "plugins": [
+    {
+      "source": {
+        "path": "./plugins/codex"
+      },
+      "interface": {
+        "displayName": "Volcano",
+        "description": "Volcano platform skills and CLI-first workflows for Codex."
+      }
+    }
+  ]
+}

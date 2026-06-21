@@ -14,7 +14,8 @@
     "clean": "pnpm -r clean",
     "check:no-content-duplicates": "node scripts/check-no-content-duplicates.mjs",
     "check:skill-submodules": "node scripts/check-skill-submodules.mjs",
-    "check:claude-desktop": "node scripts/check-claude-desktop.mjs"
+    "check:claude-desktop": "node scripts/check-claude-desktop.mjs",
+    "check:codex": "node scripts/check-codex.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

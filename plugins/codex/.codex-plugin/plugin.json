@@ -1,0 +1,6 @@
+{
+  "name": "volcano",
+  "version": "0.0.1",
+  "description": "Volcano platform skills and CLI-first workflows for Codex.",
+  "skills": "./skills/"
+}

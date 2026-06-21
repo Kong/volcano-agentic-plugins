@@ -38,6 +38,9 @@ jobs:
       - name: Smoke-test Claude Desktop extension
         run: pnpm check:claude-desktop
 
+      - name: Smoke-test Codex plugin
+        run: pnpm check:codex
+
       - name: Typecheck
         run: pnpm -r typecheck
 
