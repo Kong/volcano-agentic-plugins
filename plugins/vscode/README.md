@@ -2,7 +2,7 @@
 
 The Volcano extension for VS Code and other editors that consume `.vsix` /
 Open VSX (e.g. Windsurf). **Cursor is not covered here** — it has its own plugin
-system; see [`../cursor`](../cursor). This extension is a
+system; see [Volcano for Cursor](https://github.com/Kong/volcano-agentic-plugins/tree/main/plugins/cursor). This extension is a
 **thin shell over the Volcano CLI** — it adds editor UX (commands, a status
 bar, onboarding) and **fetches agent content at runtime**; it bundles no
 skills, `AGENTS.md`, or safety text.

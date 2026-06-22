@@ -8,3 +8,5 @@ out/
 coverage/
 .vscode-test/
 .cursor/
+*.mcpb
+*.dxt
