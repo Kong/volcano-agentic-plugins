@@ -75,7 +75,9 @@ pnpm build                       # build all packages + plugins
 pnpm typecheck                   # typecheck everything
 pnpm check:skill-submodules      # verify skill submodules are latest
 pnpm check:no-content-duplicates # verify plugins do not copy canonical content
-pnpm check:install-entrypoints   # verify every plugin exposes an install path
+pnpm check:install-entrypoints   # verify every plugin exposes an install-volcano path
+pnpm package:vscode              # produce plugins/vscode/volcano.vsix
+pnpm package:claude-desktop      # validate and pack a Claude Desktop MCPB to /tmp
 ```
 
 ## Status

@@ -2,7 +2,7 @@
   "name": "volcano-agentic-plugins",
   "version": "0.0.0",
   "private": true,
-  "description": "Monorepo for Volcano plugins/extensions across agentic IDEs. Thin shells over the Volcano CLI; content is fetched at runtime, never bundled.",
+  "description": "Monorepo for Volcano plugins/extensions across agentic IDEs. Thin shells over the Volcano CLI with canonical content supplied by submodules or runtime fetches, never copied.",
   "engines": {
     "node": ">=24",
     "pnpm": ">=9"
@@ -16,7 +16,9 @@
     "check:skill-submodules": "node scripts/check-skill-submodules.mjs",
     "check:claude-desktop": "node scripts/check-claude-desktop.mjs",
     "check:codex": "node scripts/check-codex.mjs",
-    "check:install-entrypoints": "node scripts/check-install-entrypoints.mjs"
+    "check:install-entrypoints": "node scripts/check-install-entrypoints.mjs",
+    "package:vscode": "pnpm --filter volcano package",
+    "package:claude-desktop": "npx --yes @anthropic-ai/mcpb validate plugins/claude-desktop/manifest.json && rm -f /tmp/volcano-claude-desktop.mcpb && npx --yes @anthropic-ai/mcpb pack plugins/claude-desktop /tmp/volcano-claude-desktop.mcpb"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

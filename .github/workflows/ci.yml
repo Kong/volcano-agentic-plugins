@@ -49,3 +49,9 @@ jobs:
 
       - name: Build VS Code extension
         run: pnpm --filter volcano build
+
+      - name: Package VS Code extension
+        run: pnpm package:vscode
+
+      - name: Package Claude Desktop MCPB
+        run: pnpm package:claude-desktop
