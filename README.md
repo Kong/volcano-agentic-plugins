@@ -80,6 +80,17 @@ pnpm package:vscode              # produce plugins/vscode/volcano.vsix
 pnpm package:claude-desktop      # validate and pack a Claude Desktop MCPB to /tmp
 ```
 
+## Release artifacts
+
+The release workflow publishes downloadable assets for web install CTAs:
+
+```txt
+https://github.com/Kong/volcano-agentic-plugins/releases/latest/download/volcano-vscode.vsix
+https://github.com/Kong/volcano-agentic-plugins/releases/latest/download/volcano-claude-desktop.mcpb
+```
+
+Use `workflow_dispatch` with a tag like `v0.0.1`, or push a `v*` tag.
+
 ## Status
 
 - [x] Monorepo scaffold (`packages/` + `plugins/`)

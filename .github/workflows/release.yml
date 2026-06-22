@@ -1,0 +1,87 @@
+name: Release plugin artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to create/update, e.g. v0.0.1"
+        required: true
+        type: string
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate
+        run: |
+          pnpm check:skill-submodules
+          pnpm check:no-content-duplicates
+          pnpm check:install-entrypoints
+          pnpm check:codex
+          pnpm check:claude-desktop
+          pnpm -r typecheck
+
+      - name: Package VS Code extension
+        run: |
+          pnpm --filter volcano build
+          pnpm package:vscode
+          mkdir -p dist/release
+          cp plugins/vscode/volcano.vsix dist/release/volcano-vscode.vsix
+
+      - name: Package Claude Desktop MCPB
+        run: |
+          rm -f dist/release/volcano-claude-desktop.mcpb
+          npx --yes @anthropic-ai/mcpb validate plugins/claude-desktop/manifest.json
+          npx --yes @anthropic-ai/mcpb pack plugins/claude-desktop dist/release/volcano-claude-desktop.mcpb
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: volcano-plugin-artifacts
+          path: dist/release/*
+
+      - name: Resolve release tag
+        id: release_tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish GitHub Release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          name: Volcano Agentic Plugins ${{ steps.release_tag.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            dist/release/volcano-vscode.vsix
+            dist/release/volcano-claude-desktop.mcpb
