@@ -1,9 +1,20 @@
 {
+  "name": "volcano-agentic-plugins",
+  "interface": {
+    "displayName": "Volcano Agentic Plugins"
+  },
   "plugins": [
     {
+      "name": "volcano",
       "source": {
+        "source": "local",
         "path": "./plugins/codex"
       },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Engineering",
       "interface": {
         "displayName": "Volcano",
         "description": "Volcano platform skills and CLI-first workflows for Codex."

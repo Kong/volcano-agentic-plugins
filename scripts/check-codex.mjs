@@ -13,8 +13,13 @@ if (manifest.name !== "volcano") throw new Error("Codex plugin name must be volc
 if (manifest.skills !== "./skills/") throw new Error("Codex plugin skills must point to ./skills/");
 
 const marketplace = readJson(".agents/plugins/marketplace.json");
-const entry = marketplace.plugins?.find((plugin) => plugin?.source?.path === "./plugins/codex");
-if (!entry) throw new Error(".agents/plugins/marketplace.json missing ./plugins/codex entry");
+if (marketplace.name !== "volcano-agentic-plugins") throw new Error("Codex marketplace must have stable name volcano-agentic-plugins");
+if (marketplace.interface?.displayName !== "Volcano Agentic Plugins") throw new Error("Codex marketplace must have display name");
+const entry = marketplace.plugins?.find((plugin) => plugin?.name === "volcano" && plugin?.source?.path === "./plugins/codex");
+if (!entry) throw new Error(".agents/plugins/marketplace.json missing named volcano entry for ./plugins/codex");
+if (entry.source?.source !== "local") throw new Error("Codex marketplace source must declare source: local");
+if (entry.policy?.installation !== "AVAILABLE") throw new Error("Codex marketplace plugin must be installable");
+if (entry.policy?.authentication !== "ON_INSTALL") throw new Error("Codex marketplace auth policy must be ON_INSTALL");
 if (entry.interface?.displayName !== "Volcano") throw new Error("Codex marketplace displayName must be Volcano");
 
 const gitlink = execFileSync("git", ["ls-files", "--stage", "plugins/codex/skills"], { encoding: "utf8" });

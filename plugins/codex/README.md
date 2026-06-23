@@ -31,18 +31,18 @@ Codex supports repo-scoped plugin marketplaces at:
 
 This repo has one that points at `plugins/codex`.
 
-From this repo, restart Codex and open the plugin directory. Choose the repo marketplace and install `Volcano`.
-
-You can also add the repo marketplace with Codex CLI:
+From this repo, add the repo as a local marketplace and then add the Volcano plugin from that marketplace:
 
 ```sh
 codex plugin marketplace add ./
+codex plugin add volcano@volcano-agentic-plugins
 ```
 
-or from GitHub:
+Or add the marketplace from GitHub:
 
 ```sh
 codex plugin marketplace add Kong/volcano-agentic-plugins --ref main
+codex plugin add volcano@volcano-agentic-plugins
 ```
 
 ## Submodule caveat
