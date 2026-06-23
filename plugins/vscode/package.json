@@ -36,8 +36,8 @@
         "category": "Volcano"
       },
       {
-        "command": "volcano.installVolcano",
-        "title": "Install Volcano",
+        "command": "volcano.install-volcano",
+        "title": "install-volcano",
         "category": "Volcano"
       },
       {

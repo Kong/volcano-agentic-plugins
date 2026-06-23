@@ -39,8 +39,8 @@ assert(desktopManifest.tools?.some((tool) => tool.name === "install-volcano"), "
 
 const vscodeManifest = json("plugins/vscode/package.json");
 assert(
-  vscodeManifest.contributes?.commands?.some((command) => command.command === "volcano.installVolcano"),
-  "VS Code extension must expose volcano.installVolcano command",
+  vscodeManifest.contributes?.commands?.some((command) => command.command === "volcano.install-volcano"),
+  "VS Code extension must expose volcano.install-volcano command",
 );
 
 console.log("Install-volcano entrypoint check passed.");

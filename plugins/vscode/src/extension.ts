@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("volcano.startBuilding", startBuilding),
     vscode.commands.registerCommand("volcano.login", login),
     vscode.commands.registerCommand("volcano.status", status),
-    vscode.commands.registerCommand("volcano.installVolcano", installVolcano),
+    vscode.commands.registerCommand("volcano.install-volcano", installVolcano),
     vscode.commands.registerCommand(
       "volcano.showAgentInstructions",
       showAgentInstructions,
@@ -53,7 +53,7 @@ async function refreshStatusBar(): Promise<void> {
   } else {
     statusBar.text = `$(flame) Volcano: set up`;
     statusBar.tooltip = `Volcano CLI not found. Click to install or upgrade.\n${cfg.webUrl}`;
-    statusBar.command = "volcano.installVolcano";
+    statusBar.command = "volcano.install-volcano";
   }
   statusBar.show();
 }
@@ -115,7 +115,7 @@ async function status(): Promise<void> {
   });
 
   if (result.spawnError) {
-    output.appendLine(`! CLI not found (${cfg.cliPath}). Run "Volcano: Install Volcano".`);
+    output.appendLine(`! CLI not found (${cfg.cliPath}). Run "Volcano: install-volcano".`);
     const choice = await vscode.window.showWarningMessage(
       "Volcano CLI not found.",
       "Install",
@@ -133,7 +133,7 @@ async function status(): Promise<void> {
 async function installVolcano(): Promise<void> {
   const cfg = getConfig();
   const terminal = vscode.window.createTerminal({
-    name: "Volcano: install",
+    name: "Volcano: install-volcano",
     env: cliEnv(cfg),
   });
   terminal.show();

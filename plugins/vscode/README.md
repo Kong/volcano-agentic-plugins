@@ -14,7 +14,7 @@ skills, `AGENTS.md`, or safety text.
 | `Volcano: Start Building` | Quick menu: open the guide, install/upgrade the CLI, or log in. |
 | `Volcano: Log In` | Runs `volcano login` (device flow) in a terminal. |
 | `Volcano: Status` | Runs `volcano status` and prints to the Volcano output channel. |
-| `Volcano: Install Volcano` | Runs `volcano upgrade` if the CLI exists; otherwise downloads the latest CLI. |
+| `Volcano: install-volcano` | Runs `volcano upgrade` if the CLI exists; otherwise downloads the latest CLI. |
 | `Volcano: Show Agent Instructions (AGENTS.md)` | Fetches `AGENTS.md` live from the configured origin. |
 
 ## Settings
