@@ -25,11 +25,7 @@ plugins/claude-desktop/
 
 ## User config
 
-The extension manifest exposes:
-
-| Config | Default | Purpose |
-| --- | --- | --- |
-| `web_url` | `https://volcano.dev` | Origin for Volcano bootstrap/docs/skills. Use `http://localhost:3000` for local Volcano web development. |
+The extension does not require user configuration. It ships Volcano instructions and skills in the MCPB, and the `install-volcano` tool installs or upgrades only the Volcano CLI.
 
 ## Local test
 

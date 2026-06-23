@@ -21,10 +21,7 @@
     "entry_point": "server/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.js"],
-      "env": {
-        "VOLCANO_WEB_URL": "${user_config.web_url}"
-      }
+      "args": ["${__dirname}/server/index.js"]
     }
   },
   "tools": [
@@ -46,15 +43,6 @@
     }
   ],
   "tools_generated": false,
-  "user_config": {
-    "web_url": {
-      "type": "string",
-      "title": "Volcano Web URL",
-      "description": "Origin for Volcano bootstrap/docs/skills. Use http://localhost:3000 for local Volcano web development.",
-      "default": "https://volcano.dev",
-      "required": true
-    }
-  },
   "compatibility": {
     "claude_desktop": ">=0.10.0",
     "runtimes": {

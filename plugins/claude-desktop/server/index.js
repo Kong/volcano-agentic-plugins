@@ -12,16 +12,6 @@ const readline = require("node:readline");
 
 const EXTENSION_ROOT = path.resolve(__dirname, "..");
 const SKILLS_DIR = path.join(EXTENSION_ROOT, "skills");
-const DEFAULT_WEB_URL = "https://volcano.dev";
-
-function cleanWebUrl(value) {
-  const trimmed = String(value || "").trim().replace(/\/+$/, "");
-  return trimmed || DEFAULT_WEB_URL;
-}
-
-function webUrl() {
-  return cleanWebUrl(process.env.VOLCANO_WEB_URL);
-}
 
 function text(content) {
   return { content: [{ type: "text", text: content }] };
