@@ -30,7 +30,7 @@
     ],
     "websiteURL": "https://volcano.dev/",
     "brandColor": "#D71920",
-    "logo": "./assets/volcano-logo.svg",
-    "screenshots": []
+    "screenshots": [],
+    "logo": "./assets/volcano_256.png"
   }
 }

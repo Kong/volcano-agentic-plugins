@@ -131,21 +131,29 @@ The only uninitialized submodule in this clone should be
 
 ## Marketplace assets and metadata
 
-Current marketplace assets are intentionally simple generated Volcano placeholders
-unless/until official brand artwork is provided.
+Use official Volcano artwork, not generated placeholders.
 
 Tracked asset locations:
 
-- `plugins/vscode/resources/icon.png` — VS Code/Open VSX icon, 128x128 PNG
-- `plugins/claude-desktop/icon.png` — MCPB icon, 512x512 PNG
-- `plugins/codex/assets/volcano-logo.svg`
-- `plugins/codex/assets/volcano-icon.png`
-- `plugins/cursor/assets/volcano-logo.svg`
-- `plugins/cursor/assets/volcano-icon.png`
-- `plugins/claude-code/assets/volcano-logo.svg`
-- `plugins/claude-code/assets/volcano-icon.png`
+- `plugins/vscode/resources/volcano_128.png` — VS Code/Open VSX icon, 128x128 PNG
+- `plugins/cursor/assets/volcano_256.png` — Cursor icon, 256x256 PNG
+- `plugins/cursor/assets/volcano_128.png` — Cursor icon, 128x128 PNG
+- `plugins/cursor/assets/volcano_dark_16.svg` — Cursor dark theme small icon
+- `plugins/cursor/assets/volcano_light_16.svg` — Cursor light theme small icon
+- `plugins/codex/assets/volcano_256.png` — Codex logo, 256x256 PNG
+- `plugins/codex/assets/volcano_128.png` — Codex icon, 128x128 PNG
+- `plugins/codex/assets/volcano_dark_16.svg` — Codex dark theme small icon
+- `plugins/codex/assets/volcano_light_16.svg` — Codex light theme small icon
+- `plugins/claude-code/assets/volcano_256.png` — Claude Code icon, 256x256 PNG
+- `plugins/claude-code/assets/volcano_128.png` — Claude Code icon, 128x128 PNG
+- `plugins/claude-code/assets/volcano_dark_16.svg` — Claude Code dark theme small icon
+- `plugins/claude-code/assets/volcano_light_16.svg` — Claude Code light theme small icon
+- `plugins/claude-desktop/assets/volcano_256.png` — Claude Desktop MCPB icon, 256x256 PNG
+- `plugins/claude-desktop/assets/volcano_128.png` — Claude Desktop icon, 128x128 PNG
+- `plugins/claude-desktop/assets/volcano_dark_16.svg` — Claude Desktop dark theme small icon
+- `plugins/claude-desktop/assets/volcano_light_16.svg` — Claude Desktop light theme small icon
 
-If replacing assets with official artwork, update all relevant files and run:
+If replacing assets, update all relevant files and run:
 
 ```sh
 pnpm check:marketplace-assets

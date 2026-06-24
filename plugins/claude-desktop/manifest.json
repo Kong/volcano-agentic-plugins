@@ -6,7 +6,6 @@
   "license": "Apache-2.0",
   "description": "Volcano setup and canonical agent instructions for Claude Desktop.",
   "long_description": "A lightweight Claude Desktop extension that exposes Volcano setup guidance and canonical agent instructions. It does not implement the full Volcano MCP action surface yet.",
-  "icon": "icon.png",
   "keywords": [
     "volcano",
     "agents",
@@ -58,5 +57,6 @@
     "runtimes": {
       "node": ">=18.0.0"
     }
-  }
+  },
+  "icon": "assets/volcano_256.png"
 }
