@@ -1,9 +1,10 @@
 {
   "name": "volcano",
   "displayName": "Volcano",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
-  "description": "Build and deploy apps and AI agents on Volcano — from VS Code and other vsix/Open VSX editors.",
+  "description": "Build and deploy apps and AI agents on Volcano \u2014 from VS Code and other vsix/Open VSX editors.",
+  "icon": "resources/icon.png",
   "publisher": "volcano",
   "license": "Apache-2.0",
   "repository": {
@@ -14,10 +15,19 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
-  "keywords": ["volcano", "serverless", "deploy", "ai agents"],
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "volcano",
+    "serverless",
+    "deploy",
+    "ai agents"
+  ],
   "main": "./dist/extension.js",
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
     "commands": [
       {

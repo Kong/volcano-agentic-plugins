@@ -47,6 +47,9 @@ jobs:
       - name: Check install entrypoints
         run: pnpm check:install-entrypoints
 
+      - name: Check marketplace assets and metadata
+        run: pnpm check:marketplace-assets
+
       - name: Typecheck
         run: pnpm -r typecheck
 

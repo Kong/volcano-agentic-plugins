@@ -44,6 +44,7 @@ jobs:
           pnpm check:skill-drift
           pnpm check:no-content-duplicates
           pnpm check:install-entrypoints
+          pnpm check:marketplace-assets
           pnpm check:codex
           pnpm check:claude-desktop
           pnpm -r typecheck

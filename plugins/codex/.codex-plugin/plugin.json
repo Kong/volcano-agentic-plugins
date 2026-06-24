@@ -1,6 +1,36 @@
 {
   "name": "volcano",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Volcano platform skills and CLI-first workflows for Codex.",
-  "skills": "./skills/"
+  "author": {
+    "name": "Volcano",
+    "email": "support@volcano.dev",
+    "url": "https://volcano.dev/"
+  },
+  "homepage": "https://volcano.dev/",
+  "repository": "https://github.com/Kong/volcano-agentic-plugins/tree/main/plugins/codex",
+  "license": "Apache-2.0",
+  "keywords": [
+    "volcano",
+    "agents",
+    "serverless",
+    "deploy",
+    "cli"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Volcano",
+    "shortDescription": "Build and deploy apps and AI agents on Volcano.",
+    "longDescription": "Volcano for Codex provides canonical Volcano platform skills and CLI-first workflows, including install-volcano for installing or upgrading the Volcano CLI.",
+    "developerName": "Volcano",
+    "category": "Engineering",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://volcano.dev/",
+    "brandColor": "#D71920",
+    "logo": "./assets/volcano-logo.svg",
+    "screenshots": []
+  }
 }

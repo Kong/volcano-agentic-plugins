@@ -1,6 +1,6 @@
 {
   "name": "volcano-agentic-plugins",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "private": true,
   "license": "Apache-2.0",
   "description": "Monorepo for Volcano plugins/extensions across agentic IDEs. Thin shells over the Volcano CLI with materialized canonical skills drift-checked against the volcano-skills source submodule.",
@@ -20,6 +20,7 @@
     "check:claude-desktop": "node scripts/check-claude-desktop.mjs",
     "check:codex": "node scripts/check-codex.mjs",
     "check:install-entrypoints": "node scripts/check-install-entrypoints.mjs",
+    "check:marketplace-assets": "node scripts/check-marketplace-assets.mjs",
     "package:vscode": "pnpm --filter volcano package",
     "package:claude-desktop": "npx --yes @anthropic-ai/mcpb validate plugins/claude-desktop/manifest.json && rm -f /tmp/volcano-claude-desktop.mcpb && npx --yes @anthropic-ai/mcpb pack plugins/claude-desktop /tmp/volcano-claude-desktop.mcpb"
   },
@@ -28,6 +29,10 @@
     "typescript": "^5.5.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "keytar", "@vscode/vsce-sign"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "keytar",
+      "@vscode/vsce-sign"
+    ]
   }
 }

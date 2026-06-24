@@ -2,10 +2,17 @@
   "manifest_version": "0.3",
   "name": "volcano",
   "display_name": "Volcano",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "Apache-2.0",
   "description": "Volcano setup and canonical agent instructions for Claude Desktop.",
   "long_description": "A lightweight Claude Desktop extension that exposes Volcano setup guidance and canonical agent instructions. It does not implement the full Volcano MCP action surface yet.",
+  "icon": "icon.png",
+  "keywords": [
+    "volcano",
+    "agents",
+    "serverless",
+    "cli"
+  ],
   "author": {
     "name": "Volcano",
     "email": "support@volcano.dev",
@@ -22,7 +29,9 @@
     "entry_point": "server/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.js"]
+      "args": [
+        "${__dirname}/server/index.js"
+      ]
     }
   },
   "tools": [

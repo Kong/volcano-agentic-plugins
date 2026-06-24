@@ -1,7 +1,7 @@
 {
   "name": "volcano",
   "description": "Volcano platform rules and setup command for Cursor Agent.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": {
     "name": "Volcano",
     "email": "support@volcano.dev"
