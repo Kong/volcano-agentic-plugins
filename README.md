@@ -69,6 +69,9 @@ enhancement, never a prerequisite.
 
 ## Toolchain
 
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for maintenance, skills sync, validation,
+and release procedures.
+
 - Node ≥ 24, pnpm ≥ 9
 - TypeScript, esbuild for extension bundling
 
