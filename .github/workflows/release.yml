@@ -41,6 +41,7 @@ jobs:
       - name: Validate
         run: |
           pnpm check:skill-submodules
+          pnpm check:skill-drift
           pnpm check:no-content-duplicates
           pnpm check:install-entrypoints
           pnpm check:codex

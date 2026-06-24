@@ -46,7 +46,7 @@ function setupInstructions() {
 function readAgentInstructions() {
   const agents = path.join(SKILLS_DIR, "AGENTS.md");
   if (fs.existsSync(agents)) return fs.readFileSync(agents, "utf8");
-  return `AGENTS.md is not present in ${SKILLS_DIR}. Initialize submodules or run install-volcano for CLI setup.`;
+  return `AGENTS.md is not present in ${SKILLS_DIR}. Reinstall the extension package or run install-volcano for CLI setup.`;
 }
 
 function skillIndex() {
@@ -88,7 +88,7 @@ const tools = [
   },
   {
     name: "volcano_agent_instructions",
-    description: "Return the canonical Volcano agent instructions from this extension's skills submodule.",
+    description: "Return the canonical Volcano agent instructions from this extension's packaged skills directory.",
     inputSchema: {
       type: "object",
       properties: {},
@@ -97,7 +97,7 @@ const tools = [
   },
   {
     name: "volcano_skill_index",
-    description: "List the canonical Volcano skills included via the skills submodule.",
+    description: "List the canonical Volcano skills included in this extension's packaged skills directory.",
     inputSchema: {
       type: "object",
       properties: {},

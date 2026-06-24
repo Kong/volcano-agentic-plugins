@@ -2,10 +2,10 @@
 
 Native Claude Code plugin for Volcano.
 
-This plugin exposes Volcano's canonical skills without copying them:
+This plugin exposes Volcano's canonical skills as tracked files so Claude Code marketplace shallow clones include them:
 
 ```txt
-plugins/claude-code/skills  # git submodule: https://github.com/kong/volcano-skills.git
+plugins/claude-code/skills  # materialized from sources/volcano-skills
 ```
 
 So Claude Code sees namespaced skills such as:
@@ -33,16 +33,13 @@ plugins/claude-code/
 ├── .claude-plugin/plugin.json
 ├── commands/
 │   └── install-volcano.md
-└── skills/  # git submodule: volcano-skills
+└── skills/  # materialized volcano-skills snapshot
 ```
 
 ## Local testing
 
-Use a clone with submodules initialized:
-
-```sh
-git submodule update --init --recursive
-```
+Use a normal clone of this repository. Submodules are needed only for CI drift
+checks, not for local Claude Code plugin loading.
 
 Validate the plugin:
 
@@ -66,8 +63,7 @@ Before submitting, run:
 claude plugin validate plugins/claude-code
 ```
 
-## Submodule caveat
+## Drift caveat
 
-The plugin depends on `plugins/claude-code/skills` being initialized. If a
-marketplace or indexer does not clone submodules, we'll need a publish-time
-materialization step or a marketplace source rooted at `volcano-skills` itself.
+When canonical Volcano skills change, refresh `sources/volcano-skills`, run
+`pnpm sync:skills`, then run `pnpm check:skill-drift`.

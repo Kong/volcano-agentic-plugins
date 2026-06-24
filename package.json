@@ -2,7 +2,8 @@
   "name": "volcano-agentic-plugins",
   "version": "0.0.0",
   "private": true,
-  "description": "Monorepo for Volcano plugins/extensions across agentic IDEs. Thin shells over the Volcano CLI with canonical content supplied by submodules or runtime fetches, never copied.",
+  "license": "Apache-2.0",
+  "description": "Monorepo for Volcano plugins/extensions across agentic IDEs. Thin shells over the Volcano CLI with materialized canonical skills drift-checked against the volcano-skills source submodule.",
   "engines": {
     "node": ">=24",
     "pnpm": ">=9"
@@ -14,6 +15,8 @@
     "clean": "pnpm -r clean",
     "check:no-content-duplicates": "node scripts/check-no-content-duplicates.mjs",
     "check:skill-submodules": "node scripts/check-skill-submodules.mjs",
+    "check:skill-drift": "node scripts/check-skill-drift.mjs",
+    "sync:skills": "node scripts/sync-skills-from-source.mjs",
     "check:claude-desktop": "node scripts/check-claude-desktop.mjs",
     "check:codex": "node scripts/check-codex.mjs",
     "check:install-entrypoints": "node scripts/check-install-entrypoints.mjs",

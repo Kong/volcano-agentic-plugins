@@ -28,7 +28,7 @@ assertCliOnlyInstaller(claudeInstall, "Claude Code install-volcano command");
 
 for (const plugin of ["cursor", "claude-code", "claude-desktop", "codex"]) {
   const skillPath = `plugins/${plugin}/skills/install-volcano/SKILL.md`;
-  assert(existsSync(skillPath), `${plugin} skills submodule must expose install-volcano/SKILL.md`);
+  assert(existsSync(skillPath), `${plugin} materialized skills must expose install-volcano/SKILL.md`);
 }
 
 const codexInstall = read("plugins/codex/skills/install-volcano/SKILL.md");

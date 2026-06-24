@@ -1,32 +1,25 @@
 import { execFileSync } from "node:child_process";
 import process from "node:process";
 
+const SOURCE_PATH = "sources/volcano-skills";
+const CANONICAL_URL = "https://github.com/Kong/volcano-skills.git";
+const PLUGIN_SKILL_PATHS = [
+  "plugins/cursor/skills",
+  "plugins/claude-code/skills",
+  "plugins/claude-desktop/skills",
+  "plugins/codex/skills",
+];
+
 function git(args, opts = {}) {
   return execFileSync("git", args, { encoding: "utf8", ...opts }).trim();
 }
 
-function moduleEntries() {
-  const pathsOut = git(["config", "--file", ".gitmodules", "--get-regexp", "^submodule\\..*\\.path$"]);
-  const entries = [];
-
-  for (const line of pathsOut.split("\n")) {
-    const [key, path] = line.trim().split(/\s+/);
-    if (!path?.startsWith("plugins/") || !path.endsWith("/skills")) continue;
-    const name = key.replace(/^submodule\./, "").replace(/\.path$/, "");
-    const url = git(["config", "--file", ".gitmodules", "--get", `submodule.${name}.url`]);
-    entries.push({ name, path, url });
-  }
-
-  return entries;
+function gitConfig(key) {
+  return git(["config", "--file", ".gitmodules", "--get", key]);
 }
 
-function indexSha(path) {
-  const line = git(["ls-files", "--stage", path]);
-  const [mode, sha] = line.split(/\s+/);
-  if (mode !== "160000") {
-    throw new Error(`${path} is not a git submodule (mode ${mode || "missing"})`);
-  }
-  return sha;
+function gitStage(path) {
+  return git(["ls-files", "--stage", path]);
 }
 
 function remoteHead(url) {
@@ -36,50 +29,86 @@ function remoteHead(url) {
   return sha;
 }
 
-const entries = moduleEntries();
-if (entries.length === 0) {
-  console.error("No plugin-local skills submodules found in .gitmodules.");
-  process.exit(1);
-}
-
-const errors = [];
-const remoteHeads = new Map();
-
-for (const entry of entries) {
+function modulePaths() {
   try {
-    const pinned = indexSha(entry.path);
-    const latest = remoteHead(entry.url);
-    remoteHeads.set(entry.url, latest);
-
-    if (pinned !== latest) {
-      errors.push(`${entry.path} is pinned to ${pinned}, but ${entry.url} HEAD is ${latest}`);
-    }
-
-    // If checked out locally, ensure worktree matches the committed gitlink.
-    try {
-      const worktreeHead = git(["-C", entry.path, "rev-parse", "HEAD"]);
-      if (worktreeHead !== pinned) {
-        errors.push(`${entry.path} worktree is ${worktreeHead}, but gitlink is ${pinned}`);
-      }
-    } catch {
-      // CI checkout with submodules=false can still check gitlinks; ignore.
-    }
-  } catch (err) {
-    errors.push(err instanceof Error ? err.message : String(err));
+    return git(["config", "--file", ".gitmodules", "--get-regexp", "^submodule\\..*\\.path$"])
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => line.trim().split(/\s+/)[1]);
+  } catch {
+    return [];
   }
 }
 
-const pinnedSet = new Set(entries.map((entry) => indexSha(entry.path)));
-if (pinnedSet.size > 1) {
-  errors.push(`Skill submodules are not all pinned to the same commit: ${[...pinnedSet].join(", ")}`);
+const errors = [];
+
+const paths = modulePaths();
+for (const path of paths) {
+  if (path !== SOURCE_PATH) {
+    errors.push(`Unexpected submodule path ${path}; plugin skills must be tracked files, not submodules`);
+  }
+}
+
+try {
+  const sourceUrl = gitConfig(`submodule.${SOURCE_PATH}.url`);
+  if (sourceUrl !== CANONICAL_URL) {
+    errors.push(`${SOURCE_PATH} must point at ${CANONICAL_URL}, got ${sourceUrl}`);
+  }
+} catch {
+  errors.push(`.gitmodules must define submodule.${SOURCE_PATH}.url`);
+}
+
+try {
+  const sourcePath = gitConfig(`submodule.${SOURCE_PATH}.path`);
+  if (sourcePath !== SOURCE_PATH) {
+    errors.push(`.gitmodules must define submodule.${SOURCE_PATH}.path = ${SOURCE_PATH}`);
+  }
+} catch {
+  errors.push(`.gitmodules must define submodule.${SOURCE_PATH}.path`);
+}
+
+try {
+  const [mode, pinned] = gitStage(SOURCE_PATH).split(/\s+/);
+  if (mode !== "160000") {
+    errors.push(`${SOURCE_PATH} must be a git submodule (mode ${mode || "missing"})`);
+  } else {
+    const latest = remoteHead(CANONICAL_URL);
+    if (pinned !== latest) {
+      errors.push(`${SOURCE_PATH} is pinned to ${pinned}, but ${CANONICAL_URL} HEAD is ${latest}`);
+    }
+
+    try {
+      const worktreeHead = git(["-C", SOURCE_PATH, "rev-parse", "HEAD"]);
+      if (worktreeHead !== pinned) {
+        errors.push(`${SOURCE_PATH} worktree is ${worktreeHead}, but gitlink is ${pinned}`);
+      }
+    } catch {
+      errors.push(`${SOURCE_PATH} worktree is not initialized; run git submodule update --init --recursive`);
+    }
+  }
+} catch (err) {
+  errors.push(err instanceof Error ? err.message : String(err));
+}
+
+for (const path of PLUGIN_SKILL_PATHS) {
+  try {
+    const line = gitStage(path);
+    if (!line) {
+      errors.push(`${path} is missing from the git index`);
+    } else if (line.startsWith("160000 ")) {
+      errors.push(`${path} must be materialized as tracked files, not a git submodule`);
+    }
+  } catch {
+    errors.push(`${path} is missing from the git index`);
+  }
 }
 
 if (errors.length > 0) {
-  console.error("Skill submodule check failed:");
+  console.error("Skill source check failed:");
   for (const error of errors) console.error(`- ${error}`);
   process.exit(1);
 }
 
-for (const entry of entries) {
-  console.log(`${entry.path} -> ${indexSha(entry.path)} (latest)`);
-}
+const [, pinned] = gitStage(SOURCE_PATH).split(/\s+/);
+console.log(`${SOURCE_PATH} -> ${pinned} (latest)`);
+console.log("Plugin skills are materialized as tracked files for shallow-clone marketplaces.");

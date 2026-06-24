@@ -7,11 +7,11 @@ alwaysApply: true
 
 Volcano is a serverless platform for building and deploying apps and AI agents.
 
-This plugin exposes Volcano skills through `plugins/cursor/skills`, a plugin-local git submodule pointing at `https://github.com/Kong/volcano-skills`. It does not copy or fork the skill content.
+This plugin exposes Volcano skills through `plugins/cursor/skills`, a materialized snapshot of the canonical `https://github.com/Kong/volcano-skills` source. CI drift-checks this snapshot against `sources/volcano-skills`.
 
 Canonical sources:
 
-- Plugin skills submodule: `plugins/cursor/skills`
+- Plugin skills directory: `plugins/cursor/skills`
 - Source repository: `https://github.com/Kong/volcano-skills`
 - Default web origin: `https://volcano.dev`
 

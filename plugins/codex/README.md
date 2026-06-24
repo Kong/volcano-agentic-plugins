@@ -8,7 +8,7 @@ apps/connectors, and MCP config. This plugin currently ships **skills only**, in
 ```txt
 plugins/codex/
 ├── .codex-plugin/plugin.json
-└── skills/  # git submodule: https://github.com/kong/volcano-skills.git
+└── skills/  # materialized from sources/volcano-skills
 ```
 
 Use `/install-volcano` in Codex to install or upgrade the Volcano CLI. The plugin already ships `AGENTS.md` and skills, so this command does not download skills into `~/.volcano/skills`.
@@ -17,9 +17,10 @@ There is intentionally **no MCP config yet**; Volcano does not currently ship MC
 
 ## Skills
 
-`plugins/codex/skills` is a plugin-local git submodule pointing at the canonical
-Volcano skills repository. This avoids copying `SKILL.md` files across IDE
-plugins while still giving Codex a native `skills/` directory.
+`plugins/codex/skills` is a materialized snapshot of the canonical Volcano
+skills repository. Codex marketplace/indexer paths may shallow-clone without
+submodules, so the native `skills/` directory is regular tracked content and CI
+checks it against `sources/volcano-skills`.
 
 ## Local/repo marketplace
 
@@ -45,13 +46,7 @@ codex plugin marketplace add Kong/volcano-agentic-plugins --ref main
 codex plugin add volcano@volcano-agentic-plugins
 ```
 
-## Submodule caveat
+## Drift caveat
 
-The plugin depends on `plugins/codex/skills` being initialized. Use:
-
-```sh
-git submodule update --init --recursive
-```
-
-If a marketplace/indexer does not clone submodules, we'll need a publish-time
-materialization step or a marketplace source rooted at `volcano-skills` itself.
+When canonical Volcano skills change, refresh `sources/volcano-skills`, run
+`pnpm sync:skills`, then run `pnpm check:skill-drift`.

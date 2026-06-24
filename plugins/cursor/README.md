@@ -4,10 +4,10 @@ Native Cursor plugin for Volcano. This is **not** a VS Code `.vsix` extension;
 Cursor plugins use `.cursor-plugin/plugin.json` plus components discovered from
 `rules/`, `skills/`, `commands/`, `hooks/`, and `mcp.json`.
 
-This plugin exposes Volcano's canonical skills without copying them:
+This plugin exposes Volcano's canonical skills as tracked files so Cursor marketplace shallow clones include them:
 
 ```txt
-plugins/cursor/skills  # git submodule: https://github.com/kong/volcano-skills.git
+plugins/cursor/skills  # materialized from sources/volcano-skills
 ```
 
 The plugin also includes:
@@ -22,20 +22,20 @@ There is intentionally **no MCP config yet**; Volcano does not currently ship MC
 | Path | Purpose |
 | --- | --- |
 | `.cursor-plugin/plugin.json` | Cursor plugin manifest. |
-| `skills/` | Plugin-local git submodule for canonical Volcano skills. |
+| `skills/` | Materialized canonical Volcano skills, drift-checked against `sources/volcano-skills`. |
 | `rules/volcano.mdc` | Always-applied rule: read plugin-shipped Volcano instructions and skills before Volcano work. |
 | `commands/install-volcano.md` | `/install-volcano` command to install or upgrade the Volcano CLI without downloading runtime skills. |
 
-## Why a plugin-local skills submodule?
+## Why materialized skills?
 
-A Cursor plugin can embed `skills/*/SKILL.md`, but copying those files into every
-IDE plugin would drift. A plugin-local git submodule gives Cursor a real
-`skills/` directory while keeping `volcano-skills` as the single canonical source.
-
-The root repo includes guards:
+Cursor marketplace/indexer paths may shallow-clone a plugin repository without
+initializing submodules. To keep marketplace installs functional, `skills/` is a
+regular tracked directory. The root repo still keeps `sources/volcano-skills` as
+the single canonical source and guards against drift:
 
 ```sh
 pnpm check:skill-submodules
+pnpm check:skill-drift
 pnpm check:no-content-duplicates
 ```
 
@@ -43,10 +43,10 @@ pnpm check:no-content-duplicates
 
 Cursor can load local plugins from `~/.cursor/plugins/local`.
 
-Use a clone with submodules initialized:
+Use a normal clone of this repository. Submodules are needed only for CI drift
+checks, not for local Cursor plugin loading:
 
 ```sh
-git submodule update --init --recursive
 mkdir -p ~/.cursor/plugins/local
 rm -rf ~/.cursor/plugins/local/volcano
 ln -s /Users/ted.kim/workspace/volcano-agentic-plugins/plugins/cursor \
@@ -66,8 +66,7 @@ This repo is a multi-IDE repository. The Cursor marketplace manifest is at:
 Cursor Marketplace / Team Marketplace auto-refresh should track this repository
 and pick up changes pushed to the tracked branch.
 
-## Submodule caveat
+## Drift caveat
 
-The plugin depends on `plugins/cursor/skills` being initialized. If a marketplace
-or indexer does not clone submodules, we'll need a publish-time materialization
-step or a marketplace source rooted at `volcano-skills` itself.
+When canonical Volcano skills change, refresh `sources/volcano-skills`, run
+`pnpm sync:skills`, then run `pnpm check:skill-drift`.

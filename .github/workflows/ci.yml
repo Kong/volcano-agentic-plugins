@@ -29,10 +29,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check skill submodules are latest
+      - name: Check canonical skill source submodule is latest
         run: pnpm check:skill-submodules
 
-      - name: Check plugins do not copy canonical content
+      - name: Check materialized plugin skills match canonical source
+        run: pnpm check:skill-drift
+
+      - name: Check canonical content only appears in approved plugin skill directories
         run: pnpm check:no-content-duplicates
 
       - name: Smoke-test Claude Desktop extension

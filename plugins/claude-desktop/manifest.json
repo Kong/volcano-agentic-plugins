@@ -3,6 +3,7 @@
   "name": "volcano",
   "display_name": "Volcano",
   "version": "0.0.1",
+  "license": "Apache-2.0",
   "description": "Volcano setup and canonical agent instructions for Claude Desktop.",
   "long_description": "A lightweight Claude Desktop extension that exposes Volcano setup guidance and canonical agent instructions. It does not implement the full Volcano MCP action surface yet.",
   "author": {
@@ -35,11 +36,11 @@
     },
     {
       "name": "volcano_agent_instructions",
-      "description": "Return the canonical Volcano agent instructions from this extension's skills submodule."
+      "description": "Return the canonical Volcano agent instructions from this extension's packaged skills directory."
     },
     {
       "name": "volcano_skill_index",
-      "description": "List the canonical Volcano skills included via the skills submodule."
+      "description": "List the canonical Volcano skills included in this extension's packaged skills directory."
     }
   ],
   "tools_generated": false,

@@ -11,7 +11,7 @@ plugins/claude-desktop/
 ├── manifest.json
 ├── server/
 │   └── index.js
-└── skills/  # git submodule: https://github.com/kong/volcano-skills.git
+└── skills/  # materialized from sources/volcano-skills
 ```
 
 ## Tools exposed to Claude Desktop
@@ -20,8 +20,8 @@ plugins/claude-desktop/
 | --- | --- |
 | `install-volcano` | One-step alias returning the Volcano CLI install/upgrade command. |
 | `volcano_setup_instructions` | Returns the CLI install/upgrade command. This does not download skills into `~/.volcano/skills`. |
-| `volcano_agent_instructions` | Returns canonical `AGENTS.md` from the `skills` submodule. |
-| `volcano_skill_index` | Lists canonical Volcano skills from the `skills` submodule. |
+| `volcano_agent_instructions` | Returns canonical `AGENTS.md` from the packaged `skills/` directory. |
+| `volcano_skill_index` | Lists canonical Volcano skills from the packaged `skills/` directory. |
 
 ## User config
 
@@ -29,11 +29,8 @@ The extension does not require user configuration. It ships Volcano instructions
 
 ## Local test
 
-Initialize submodules:
-
-```sh
-git submodule update --init --recursive
-```
+Use a normal clone of this repository. The extension packages materialized
+`skills/` files, so marketplace installs do not require submodules.
 
 Smoke-test the stdio MCP server:
 
@@ -53,6 +50,7 @@ cd plugins/claude-desktop
 mcpb pack
 ```
 
-## Submodule caveat
+## Drift caveat
 
-The extension depends on `plugins/claude-desktop/skills` being initialized. If a Desktop Extension packager or marketplace path does not include submodules automatically, package from a clone where submodules are initialized or add a publish-time materialization step.
+When canonical Volcano skills change, refresh `sources/volcano-skills`, run
+`pnpm sync:skills`, then run `pnpm check:skill-drift`.

@@ -8,5 +8,5 @@
   },
   "homepage": "https://volcano.dev",
   "repository": "https://github.com/Kong/volcano-agentic-plugins",
-  "license": "MIT"
+  "license": "Apache-2.0"
 }

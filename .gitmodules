@@ -1,12 +1,3 @@
-[submodule "plugins/cursor/skills"]
-	path = plugins/cursor/skills
-	url = https://github.com/kong/volcano-skills.git
-[submodule "plugins/claude-code/skills"]
-	path = plugins/claude-code/skills
-	url = https://github.com/kong/volcano-skills.git
-[submodule "plugins/claude-desktop/skills"]
-	path = plugins/claude-desktop/skills
-	url = https://github.com/kong/volcano-skills.git
-[submodule "plugins/codex/skills"]
-	path = plugins/codex/skills
-	url = https://github.com/kong/volcano-skills.git
+[submodule "sources/volcano-skills"]
+	path = sources/volcano-skills
+	url = https://github.com/Kong/volcano-skills.git

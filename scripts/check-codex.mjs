@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs";
-import { execFileSync } from "node:child_process";
+import { readFileSync, existsSync } from "node:fs";
 
 function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
@@ -22,11 +21,12 @@ if (entry.policy?.installation !== "AVAILABLE") throw new Error("Codex marketpla
 if (entry.policy?.authentication !== "ON_INSTALL") throw new Error("Codex marketplace auth policy must be ON_INSTALL");
 if (entry.interface?.displayName !== "Volcano") throw new Error("Codex marketplace displayName must be Volcano");
 
-const gitlink = execFileSync("git", ["ls-files", "--stage", "plugins/codex/skills"], { encoding: "utf8" });
-if (!gitlink.startsWith("160000 ")) throw new Error("plugins/codex/skills must be a git submodule");
+if (!existsSync("plugins/codex/skills/install-volcano/SKILL.md")) {
+  throw new Error("plugins/codex/skills must include materialized install-volcano skill");
+}
 
 const installSkill = readFileSync("plugins/codex/skills/install-volcano/SKILL.md", "utf8");
-if (!installSkill.includes("name: install-volcano")) throw new Error("Codex skills submodule must expose install-volcano skill");
+if (!installSkill.includes("name: install-volcano")) throw new Error("Codex materialized skills must expose install-volcano skill");
 if (!installSkill.includes("volcano upgrade")) throw new Error("Codex install-volcano skill must upgrade an existing CLI");
 if (installSkill.includes("bootstrap.sh") || installSkill.includes("--agent codex")) {
   throw new Error("Codex install-volcano skill must not run full bootstrap or wire agent configs");

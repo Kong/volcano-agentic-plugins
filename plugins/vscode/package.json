@@ -5,7 +5,7 @@
   "private": true,
   "description": "Build and deploy apps and AI agents on Volcano — from VS Code and other vsix/Open VSX editors.",
   "publisher": "volcano",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/Kong/volcano-agentic-plugins.git",
