@@ -1,6 +1,6 @@
 {
   "name": "volcano",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Volcano platform skills and CLI-first workflows for Codex.",
   "author": {
     "name": "Volcano",

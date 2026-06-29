@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "volcano",
   "display_name": "Volcano",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "license": "Apache-2.0",
   "description": "Volcano setup and canonical agent instructions for Claude Desktop.",
   "long_description": "A lightweight Claude Desktop extension that exposes Volcano setup guidance and canonical agent instructions. It does not implement the full Volcano MCP action surface yet.",

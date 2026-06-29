@@ -1,7 +1,7 @@
 {
   "name": "volcano",
   "description": "Volcano CLI setup and canonical skills pointer for Claude Code.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": {
     "name": "Volcano",
     "email": "support@volcano.dev"
