@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "volcano-agentic-plugins",
-  "description": "Volcano plugins for Claude Code.",
+  "description": "Volcano plugins for agentic IDEs and coding assistants.",
   "owner": {
     "name": "Volcano",
     "email": "support@volcano.dev"
@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "volcano",
-      "description": "Volcano CLI setup and canonical skills for Claude Code.",
+      "description": "Volcano agent skills and CLI for building and deploying apps and AI agents on Volcano from Claude Code. Work with functions, databases, storage, realtime, and auth through the Volcano SDK, and deploy straight from your editor.",
       "author": {
         "name": "Volcano",
         "email": "support@volcano.dev"

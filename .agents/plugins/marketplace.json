@@ -17,7 +17,7 @@
       "category": "Engineering",
       "interface": {
         "displayName": "Volcano",
-        "description": "Volcano platform skills and CLI-first workflows for Codex."
+        "description": "Volcano agent skills and CLI for building and deploying apps and AI agents on Volcano from Codex. Work with functions, databases, storage, realtime, and auth through the Volcano SDK, and deploy straight from your editor."
       }
     }
   ]

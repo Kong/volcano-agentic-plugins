@@ -5,13 +5,13 @@
     "email": "support@volcano.dev"
   },
   "metadata": {
-    "description": "Volcano plugins for agentic IDEs."
+    "description": "Volcano plugins for agentic IDEs and coding assistants."
   },
   "plugins": [
     {
       "name": "volcano",
       "source": "plugins/cursor",
-      "description": "Volcano platform rules and skills for Cursor Agent."
+      "description": "Volcano agent skills and CLI for building and deploying apps and AI agents on Volcano from Cursor. Work with functions, databases, storage, realtime, and auth through the Volcano SDK, and deploy straight from your editor."
     }
   ]
 }

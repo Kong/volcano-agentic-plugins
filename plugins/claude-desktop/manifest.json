@@ -4,8 +4,8 @@
   "display_name": "Volcano",
   "version": "0.0.3",
   "license": "Apache-2.0",
-  "description": "Volcano setup and canonical agent instructions for Claude Desktop.",
-  "long_description": "A lightweight Claude Desktop extension that exposes Volcano setup guidance and canonical agent instructions. It does not implement the full Volcano MCP action surface yet.",
+  "description": "Volcano agent skills and CLI for building and deploying apps and AI agents on Volcano from Claude Desktop. Work with functions, databases, storage, realtime, and auth through the Volcano SDK, and deploy straight from your editor.",
+  "long_description": "Volcano agent skills and CLI integration for Claude Desktop. Exposes canonical Volcano agent instructions and one-step CLI setup so you can build and deploy apps and AI agents on Volcano; the Volcano CLI remains the action path.",
   "keywords": [
     "volcano",
     "agents",
