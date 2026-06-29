@@ -22,4 +22,5 @@ package:
 # Full local validation, including host-specific validators outside pnpm.
 validate: test
 	claude plugin validate plugins/claude-code
+	claude plugin validate .claude-plugin/marketplace.json
 	$(MAKE) package

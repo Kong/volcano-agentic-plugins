@@ -27,6 +27,7 @@ const root = json("package.json");
 const vscode = json("plugins/vscode/package.json");
 const cursor = json("plugins/cursor/.cursor-plugin/plugin.json");
 const cursorMarketplace = json(".cursor-plugin/marketplace.json");
+const claudeMarketplace = json(".claude-plugin/marketplace.json");
 const claudeCode = json("plugins/claude-code/.claude-plugin/plugin.json");
 const claudeDesktop = json("plugins/claude-desktop/manifest.json");
 const codex = json("plugins/codex/.codex-plugin/plugin.json");
@@ -57,6 +58,14 @@ for (const file of ["volcano_128.png", "volcano_dark_16.svg", "volcano_light_16.
 }
 assert(claudeDesktop.license === "Apache-2.0", "Claude Desktop manifest must declare Apache-2.0");
 assert(Array.isArray(claudeDesktop.keywords) && claudeDesktop.keywords.includes("volcano"), "Claude Desktop manifest must include keywords");
+
+assert(claudeMarketplace.$schema === "https://anthropic.com/claude-code/marketplace.schema.json", "Claude marketplace must declare the Claude Code marketplace schema");
+const claudeMarketplaceEntry = claudeMarketplace.plugins?.find((plugin) => plugin?.name === "volcano");
+assert(claudeMarketplaceEntry, "Claude marketplace must include volcano plugin entry");
+assert(claudeMarketplaceEntry.source === "./plugins/claude-code", "Claude marketplace must point at ./plugins/claude-code");
+assert(claudeMarketplaceEntry.version === root.version, "Claude marketplace plugin version must match root version");
+assert(claudeMarketplaceEntry.category === "development", "Claude marketplace plugin category must be development");
+assertUrl(claudeMarketplaceEntry.homepage, "Claude marketplace homepage");
 
 assert(claudeCode.icon === "./assets/volcano_256.png", "Claude Code manifest must declare ./assets/volcano_256.png");
 assertFile(path.join("plugins/claude-code", claudeCode.icon));

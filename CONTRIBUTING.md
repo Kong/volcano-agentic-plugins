@@ -82,6 +82,7 @@ make validate
 
 ```sh
 claude plugin validate plugins/claude-code
+claude plugin validate .claude-plugin/marketplace.json
 pnpm --filter volcano build
 pnpm package:vscode
 pnpm package:claude-desktop
@@ -118,6 +119,7 @@ pnpm check:marketplace-assets
 pnpm check:codex
 pnpm check:claude-desktop
 claude plugin validate plugins/claude-code
+claude plugin validate .claude-plugin/marketplace.json
 pnpm --filter volcano build
 pnpm package:vscode
 pnpm package:claude-desktop
@@ -199,8 +201,9 @@ submission/discovery remain marketplace-specific follow-up steps.
 - VS Code uses `plugins/vscode` and packages as a VSIX. Cursor is not a VSIX host.
 - Cursor uses `.cursor-plugin/plugin.json`, rules, commands, and materialized
   `skills/`.
-- Claude Code uses `.claude-plugin/plugin.json`, commands, and materialized
-  `skills/`.
+- Claude Code uses `plugins/claude-code/.claude-plugin/plugin.json`, commands,
+  and materialized `skills/`. The repo-level Claude marketplace index lives at
+  `.claude-plugin/marketplace.json` and points to `./plugins/claude-code`.
 - Claude Desktop uses an MCP Bundle shape with a minimal local setup/instruction
   MCP server. It is not the full Volcano MCP action surface.
 - Codex uses `.codex-plugin/plugin.json` plus the repo marketplace manifest at

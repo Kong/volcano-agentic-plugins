@@ -21,7 +21,7 @@ plugins/    publishable, per-IDE plugins (one directory per IDE)
 | `@volcano-plugins/core` | `packages/core` | Shared TS helpers: base-URL resolution, CLI runner, runtime content fetcher. |
 | `volcano` (VS Code) | `plugins/vscode` | VS Code extension (`.vsix` / Open VSX; also Windsurf and other vsix forks). |
 | `volcano` (Cursor) | `plugins/cursor` | Cursor native plugin (`.cursor-plugin/plugin.json` + materialized skills/rules/commands). |
-| `volcano` (Claude Code) | `plugins/claude-code` | Claude Code plugin (`.claude-plugin/plugin.json` + materialized skills/command). |
+| `volcano` (Claude Code) | `plugins/claude-code` | Claude Code plugin (`.claude-plugin/plugin.json` + materialized skills/command); repo marketplace index at `.claude-plugin/marketplace.json`. |
 | `volcano` (Claude Desktop) | `plugins/claude-desktop` | Claude Desktop Extension / MCP Bundle (`manifest.json` + local setup/instruction MCP server). |
 | `volcano` (Codex) | `plugins/codex` | Codex plugin (`.codex-plugin/plugin.json` + materialized skills). |
 | `volcano-skills` | `sources/volcano-skills` | Canonical Volcano agent instructions and skills, pinned as the single git submodule used for drift checks. |
@@ -33,7 +33,7 @@ Different IDEs use different plugin formats, so each gets its own target:
   (`.cursor-plugin/plugin.json` + rules/commands + materialized `skills`). It exposes
   canonical skills via `plugins/cursor/skills` and provides `/install-volcano`.
   No MCP yet.
-- **Claude Code** (`plugins/claude-code`) — Claude Code plugin with canonical skills exposed via `plugins/claude-code/skills` and setup command `/volcano:install-volcano`.
+- **Claude Code** (`plugins/claude-code`) — Claude Code plugin with canonical skills exposed via `plugins/claude-code/skills`, setup command `/volcano:install-volcano`, and repo marketplace index at `.claude-plugin/marketplace.json`.
 - **Claude Desktop** (`plugins/claude-desktop`) — Desktop Extension / MCP Bundle scaffold with a local setup/instruction MCP server, `install-volcano` tool, and canonical skills in `plugins/claude-desktop/skills`. This is not the full Volcano MCP action surface yet.
 - **Codex** (`plugins/codex`) — Codex plugin with canonical skills (including `/install-volcano`) exposed via `plugins/codex/skills` and repo marketplace entry at `.agents/plugins/marketplace.json`. No MCP yet.
 - opencode — AGENTS.md + MCP config via bootstrap; no native plugin planned.

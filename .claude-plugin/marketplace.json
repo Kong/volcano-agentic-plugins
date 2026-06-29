@@ -1,0 +1,29 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "volcano-agentic-plugins",
+  "description": "Volcano plugins for Claude Code.",
+  "owner": {
+    "name": "Volcano",
+    "email": "support@volcano.dev"
+  },
+  "plugins": [
+    {
+      "name": "volcano",
+      "description": "Volcano CLI setup and canonical skills for Claude Code.",
+      "author": {
+        "name": "Volcano",
+        "email": "support@volcano.dev"
+      },
+      "version": "0.0.2",
+      "category": "development",
+      "source": "./plugins/claude-code",
+      "homepage": "https://volcano.dev",
+      "keywords": [
+        "volcano",
+        "agents",
+        "serverless",
+        "cli"
+      ]
+    }
+  ]
+}
