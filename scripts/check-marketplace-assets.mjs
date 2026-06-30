@@ -81,7 +81,7 @@ assertUrl(claudeCode.repository, "Claude Code repository");
 assert(cursor.rules === "./rules/", "Cursor manifest must expose rules");
 assert(cursor.skills === "./skills/", "Cursor manifest must expose materialized skills");
 assert(cursor.commands === "./commands/", "Cursor manifest must expose commands");
-assert(cursorMarketplace.plugins?.some((plugin) => plugin?.name === "volcano" && plugin?.source === "plugins/cursor"), "Cursor marketplace must point at plugins/cursor");
+assert(cursorMarketplace.plugins?.some((plugin) => plugin?.name === "volcano" && plugin?.source === "./plugins/cursor"), "Cursor marketplace must point at ./plugins/cursor");
 assertFile("plugins/cursor/assets/volcano_256.png");
 assertFile("plugins/cursor/assets/volcano_128.png");
 assertFile("plugins/cursor/assets/volcano_dark_16.svg");
