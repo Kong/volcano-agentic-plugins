@@ -101,7 +101,7 @@ Before a release, verify marketplace shallow-clone behavior from a clean temp
 checkout with no submodules:
 
 ```sh
-SRC=/Users/ted.kim/workspace/volcano-agentic-plugins
+SRC="$(git rev-parse --show-toplevel)"
 TMP_ROOT=$(mktemp -d /tmp/volcano-agentic-plugins-smoke.XXXXXX)
 git clone --depth=1 --no-recurse-submodules "file://$SRC" "$TMP_ROOT/repo"
 cd "$TMP_ROOT/repo"
