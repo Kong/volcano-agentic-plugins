@@ -1,11 +1,13 @@
 {
   "name": "volcano",
+  "displayName": "Volcano",
   "description": "Volcano agent skills and CLI for building and deploying apps and AI agents on Volcano from Cursor. Work with functions, databases, storage, realtime, and auth through the Volcano SDK, and deploy straight from your editor.",
   "version": "0.0.3",
   "author": {
     "name": "Volcano",
     "email": "support@volcano.dev"
   },
+  "logo": "assets/volcano_256.png",
   "rules": "./rules/",
   "skills": "./skills/",
   "commands": "./commands/"

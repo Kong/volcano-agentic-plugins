@@ -101,7 +101,7 @@ assert(codexIcon.width === 256 && codexIcon.height === 256, "Codex logo must be 
 for (const file of ["volcano_128.png", "volcano_dark_16.svg", "volcano_light_16.svg"]) {
   assertFile(`plugins/codex/assets/${file}`);
 }
-assert(codex.interface?.brandColor === "#D71920", "Codex manifest must declare brandColor");
+assert(codex.interface?.brandColor === "#F37A58", "Codex manifest must declare the Volcano brand color (#F37A58)");
 assert(codexMarketplace.plugins?.some((plugin) => plugin?.name === "volcano" && plugin?.source?.path === "./plugins/codex"), "Codex marketplace must point at ./plugins/codex");
 
 for (const plugin of ["cursor", "claude-code", "claude-desktop", "codex", "vscode"]) {
