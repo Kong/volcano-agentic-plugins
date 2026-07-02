@@ -43,6 +43,11 @@ const versions = new Map([
 ]);
 assert(new Set(versions.values()).size === 1, `publishable versions must match: ${JSON.stringify(Object.fromEntries(versions))}`);
 
+// Every plugin must declare the same license.
+for (const [host, manifest] of [["vscode", vscode], ["cursor", cursor], ["claude-code", claudeCode], ["claude-desktop", claudeDesktop], ["codex", codex]]) {
+  assert(manifest.license === "Apache-2.0", `${host} manifest must declare Apache-2.0 license`);
+}
+
 assert(vscode.icon === "./resources/volcano_128.png", "VS Code manifest must declare ./resources/volcano_128.png");
 assertFile(path.join("plugins/vscode", vscode.icon));
 const vscodeIcon = pngSize(path.join("plugins/vscode", vscode.icon));

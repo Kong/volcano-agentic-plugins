@@ -10,6 +10,7 @@
     "volcano",
     "agents",
     "serverless",
+    "deploy",
     "cli"
   ],
   "author": {
