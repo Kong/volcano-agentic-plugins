@@ -1,11 +1,23 @@
 {
   "name": "volcano",
+  "displayName": "Volcano",
   "description": "Volcano agent skills and CLI for building and deploying apps and AI agents on Volcano from Cursor. Work with functions, databases, storage, realtime, and auth through the Volcano SDK, and deploy straight from your editor.",
   "version": "0.0.3",
   "author": {
     "name": "Volcano",
     "email": "support@volcano.dev"
   },
+  "homepage": "https://volcano.dev",
+  "repository": "https://github.com/Kong/volcano-agentic-plugins",
+  "license": "Apache-2.0",
+  "keywords": [
+    "volcano",
+    "agents",
+    "serverless",
+    "deploy",
+    "cli"
+  ],
+  "logo": "./assets/volcano_256.png",
   "rules": "./rules/",
   "skills": "./skills/",
   "commands": "./commands/"

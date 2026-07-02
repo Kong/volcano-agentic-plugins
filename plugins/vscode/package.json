@@ -4,9 +4,14 @@
   "version": "0.0.3",
   "private": true,
   "description": "Build and deploy apps and AI agents on Volcano \u2014 from VS Code and other vsix/Open VSX editors.",
-  "icon": "resources/volcano_128.png",
+  "icon": "./resources/volcano_128.png",
   "publisher": "volcano",
+  "author": {
+    "name": "Volcano",
+    "email": "support@volcano.dev"
+  },
   "license": "Apache-2.0",
+  "homepage": "https://volcano.dev",
   "repository": {
     "type": "git",
     "url": "https://github.com/Kong/volcano-agentic-plugins.git",
@@ -20,8 +25,10 @@
   ],
   "keywords": [
     "volcano",
+    "agents",
     "serverless",
     "deploy",
+    "cli",
     "ai agents"
   ],
   "main": "./dist/extension.js",

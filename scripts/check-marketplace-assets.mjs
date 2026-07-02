@@ -43,13 +43,18 @@ const versions = new Map([
 ]);
 assert(new Set(versions.values()).size === 1, `publishable versions must match: ${JSON.stringify(Object.fromEntries(versions))}`);
 
-assert(vscode.icon === "resources/volcano_128.png", "VS Code manifest must declare resources/volcano_128.png");
+// Every plugin must declare the same license.
+for (const [host, manifest] of [["vscode", vscode], ["cursor", cursor], ["claude-code", claudeCode], ["claude-desktop", claudeDesktop], ["codex", codex]]) {
+  assert(manifest.license === "Apache-2.0", `${host} manifest must declare Apache-2.0 license`);
+}
+
+assert(vscode.icon === "./resources/volcano_128.png", "VS Code manifest must declare ./resources/volcano_128.png");
 assertFile(path.join("plugins/vscode", vscode.icon));
 const vscodeIcon = pngSize(path.join("plugins/vscode", vscode.icon));
 assert(vscodeIcon.width === 128 && vscodeIcon.height === 128, "VS Code icon must be 128x128 PNG");
 assert(vscode.license === "Apache-2.0", "VS Code manifest must declare Apache-2.0");
 
-assert(claudeDesktop.icon === "assets/volcano_256.png", "Claude Desktop manifest must declare assets/volcano_256.png");
+assert(claudeDesktop.icon === "./assets/volcano_256.png", "Claude Desktop manifest must declare ./assets/volcano_256.png");
 assertFile(path.join("plugins/claude-desktop", claudeDesktop.icon));
 const desktopIcon = pngSize(path.join("plugins/claude-desktop", claudeDesktop.icon));
 assert(desktopIcon.width === 256 && desktopIcon.height === 256, "Claude Desktop icon must be 256x256 PNG");
@@ -81,6 +86,12 @@ assertUrl(claudeCode.repository, "Claude Code repository");
 assert(cursor.rules === "./rules/", "Cursor manifest must expose rules");
 assert(cursor.skills === "./skills/", "Cursor manifest must expose materialized skills");
 assert(cursor.commands === "./commands/", "Cursor manifest must expose commands");
+assert(cursor.displayName === "Volcano", "Cursor manifest must declare displayName Volcano");
+assert(cursor.logo === "./assets/volcano_256.png", "Cursor manifest must declare ./assets/volcano_256.png logo");
+assertFile(path.join("plugins/cursor", cursor.logo));
+assertUrl(cursor.homepage, "Cursor homepage");
+assertUrl(cursor.repository, "Cursor repository");
+assert(Array.isArray(cursor.keywords) && cursor.keywords.length > 0, "Cursor manifest must declare keywords");
 assert(cursorMarketplace.plugins?.some((plugin) => plugin?.name === "volcano" && plugin?.source === "./plugins/cursor"), "Cursor marketplace must point at ./plugins/cursor");
 assertFile("plugins/cursor/assets/volcano_256.png");
 assertFile("plugins/cursor/assets/volcano_128.png");
@@ -101,7 +112,7 @@ assert(codexIcon.width === 256 && codexIcon.height === 256, "Codex logo must be 
 for (const file of ["volcano_128.png", "volcano_dark_16.svg", "volcano_light_16.svg"]) {
   assertFile(`plugins/codex/assets/${file}`);
 }
-assert(codex.interface?.brandColor === "#D71920", "Codex manifest must declare brandColor");
+assert(codex.interface?.brandColor === "#F37A58", "Codex manifest must declare the Volcano brand color (#F37A58)");
 assert(codexMarketplace.plugins?.some((plugin) => plugin?.name === "volcano" && plugin?.source?.path === "./plugins/codex"), "Codex marketplace must point at ./plugins/codex");
 
 for (const plugin of ["cursor", "claude-code", "claude-desktop", "codex", "vscode"]) {
