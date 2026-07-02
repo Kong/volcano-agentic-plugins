@@ -43,13 +43,13 @@ const versions = new Map([
 ]);
 assert(new Set(versions.values()).size === 1, `publishable versions must match: ${JSON.stringify(Object.fromEntries(versions))}`);
 
-assert(vscode.icon === "resources/volcano_128.png", "VS Code manifest must declare resources/volcano_128.png");
+assert(vscode.icon === "./resources/volcano_128.png", "VS Code manifest must declare ./resources/volcano_128.png");
 assertFile(path.join("plugins/vscode", vscode.icon));
 const vscodeIcon = pngSize(path.join("plugins/vscode", vscode.icon));
 assert(vscodeIcon.width === 128 && vscodeIcon.height === 128, "VS Code icon must be 128x128 PNG");
 assert(vscode.license === "Apache-2.0", "VS Code manifest must declare Apache-2.0");
 
-assert(claudeDesktop.icon === "assets/volcano_256.png", "Claude Desktop manifest must declare assets/volcano_256.png");
+assert(claudeDesktop.icon === "./assets/volcano_256.png", "Claude Desktop manifest must declare ./assets/volcano_256.png");
 assertFile(path.join("plugins/claude-desktop", claudeDesktop.icon));
 const desktopIcon = pngSize(path.join("plugins/claude-desktop", claudeDesktop.icon));
 assert(desktopIcon.width === 256 && desktopIcon.height === 256, "Claude Desktop icon must be 256x256 PNG");

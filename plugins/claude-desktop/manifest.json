@@ -58,5 +58,5 @@
       "node": ">=18.0.0"
     }
   },
-  "icon": "assets/volcano_256.png"
+  "icon": "./assets/volcano_256.png"
 }
