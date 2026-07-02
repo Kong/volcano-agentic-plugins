@@ -89,6 +89,9 @@ assert(cursor.commands === "./commands/", "Cursor manifest must expose commands"
 assert(cursor.displayName === "Volcano", "Cursor manifest must declare displayName Volcano");
 assert(cursor.logo === "./assets/volcano_256.png", "Cursor manifest must declare ./assets/volcano_256.png logo");
 assertFile(path.join("plugins/cursor", cursor.logo));
+assertUrl(cursor.homepage, "Cursor homepage");
+assertUrl(cursor.repository, "Cursor repository");
+assert(Array.isArray(cursor.keywords) && cursor.keywords.length > 0, "Cursor manifest must declare keywords");
 assert(cursorMarketplace.plugins?.some((plugin) => plugin?.name === "volcano" && plugin?.source === "./plugins/cursor"), "Cursor marketplace must point at ./plugins/cursor");
 assertFile("plugins/cursor/assets/volcano_256.png");
 assertFile("plugins/cursor/assets/volcano_128.png");
