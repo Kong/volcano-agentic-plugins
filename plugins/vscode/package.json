@@ -1,7 +1,7 @@
 {
   "name": "volcano",
   "displayName": "Volcano",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "description": "Build and deploy apps and AI agents on Volcano \u2014 from VS Code and other vsix/Open VSX editors.",
   "icon": "./resources/volcano_128.png",
