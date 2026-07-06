@@ -90,6 +90,9 @@ if ! mv "$install_tmp/volcano" "$DEST"; then
   if [ -n "$old_dest" ] && { [ -e "$old_dest" ] || [ -L "$old_dest" ]; }; then
     if mv "$old_dest" "$DEST"; then
       old_dest=""
+    else
+      warn "rollback failed; your previous install is preserved at $old_dest"
+      old_dest=""
     fi
   fi
   warn "failed to install plugin at $DEST"
