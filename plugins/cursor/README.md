@@ -39,18 +39,35 @@ pnpm check:skill-drift
 pnpm check:no-content-duplicates
 ```
 
-## Test locally in Cursor
+## Install locally (manual path)
 
-Cursor can load local plugins from `~/.cursor/plugins/local`.
+Cursor has no global `AGENTS.md`/rules file, so the host-agnostic bootstrap
+installer can only leave a *project-scoped* rule for Cursor. Installing the
+plugin into Cursor's local plugins directory instead gives the full, native
+experience across every project — the always-applied Volcano rule **and** the
+`volcano-*` skills, just like a Marketplace install.
 
-Use a normal clone of this repository. Submodules are needed only for CI drift
-checks, not for local Cursor plugin loading:
+Run the installer (from a clone of this repo, or piped from GitHub):
+
+```sh
+sh scripts/install-cursor-plugin.sh
+# …or without a local clone:
+curl -fsSL https://raw.githubusercontent.com/Kong/volcano-agentic-plugins/main/scripts/install-cursor-plugin.sh | sh
+```
+
+It copies `plugins/cursor` into `~/.cursor/plugins/local/volcano` (override the
+target with `CURSOR_PLUGINS_DIR`). Restart Cursor or run **Developer: Reload
+Window** afterward.
+
+## Develop locally (symlink)
+
+For plugin development, symlink your working tree so edits are picked up on
+reload. Submodules are needed only for CI drift checks, not for local loading:
 
 ```sh
 mkdir -p ~/.cursor/plugins/local
 rm -rf ~/.cursor/plugins/local/volcano
-ln -s /Users/ted.kim/workspace/volcano-agentic-plugins/plugins/cursor \
-  ~/.cursor/plugins/local/volcano
+ln -s "$(pwd)/plugins/cursor" ~/.cursor/plugins/local/volcano   # run from the repo root
 ```
 
 Then restart Cursor or run **Developer: Reload Window**.
