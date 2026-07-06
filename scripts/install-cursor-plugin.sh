@@ -32,7 +32,13 @@ script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd 2>/dev/null || true)"
 local_cursor="${script_dir:-}/../plugins/cursor"
 
 tmp=""
-cleanup() { if [ -n "$tmp" ]; then rm -rf "$tmp"; fi; }
+install_tmp=""
+old_dest=""
+cleanup() {
+  if [ -n "$tmp" ]; then rm -rf "$tmp"; fi
+  if [ -n "$install_tmp" ]; then rm -rf "$install_tmp"; fi
+  if [ -n "$old_dest" ] && { [ -e "$old_dest" ] || [ -L "$old_dest" ]; }; then rm -rf "$old_dest"; fi
+}
 trap cleanup 0 INT TERM
 
 if [ -n "${script_dir:-}" ] && [ -f "$local_cursor/.cursor-plugin/plugin.json" ]; then
@@ -41,17 +47,24 @@ if [ -n "${script_dir:-}" ] && [ -f "$local_cursor/.cursor-plugin/plugin.json" ]
 else
   have git || { warn "need git to fetch the plugin (or run from a checkout of the repo)"; exit 1; }
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/volcano-cursor.XXXXXX")"
+  repo="$tmp/repo"
   log "cloning $REPO_URL ($REF)"
   # Try the requested branch/tag first (quietly), then fall back to the default
   # branch keeping stderr so auth/network errors surface if that fails too.
-  git clone --depth 1 --branch "$REF" "$REPO_URL" "$tmp" >/dev/null 2>&1 \
-    || git clone --depth 1 "$REPO_URL" "$tmp" >/dev/null \
+  if ! git clone --depth 1 --branch "$REF" "$REPO_URL" "$repo" >/dev/null 2>&1; then
+    warn "could not clone ref '$REF' as a branch or tag; falling back to the repository default branch"
+    rm -rf "$repo"
+    git clone --depth 1 "$REPO_URL" "$repo" >/dev/null \
     || { warn "clone failed"; exit 1; }
-  src="$tmp/plugins/cursor"
+  fi
+  src="$repo/plugins/cursor"
 fi
 
 [ -f "$src/.cursor-plugin/plugin.json" ] || { warn "could not locate plugins/cursor in the source"; exit 1; }
 
+if [ -z "${CURSOR_PLUGINS_DIR:-}" ] && [ ! -d "$HOME/.cursor" ]; then
+  warn "$HOME/.cursor does not exist; creating Cursor's local plugin directory anyway"
+fi
 mkdir -p "$PLUGINS_DIR"
 # Safety guard before rm -rf: only ever operate on a path that ends in /volcano,
 # and never the filesystem root form "/volcano".
@@ -60,9 +73,32 @@ case "$DEST" in
   *) warn "refusing to remove unexpected destination: $DEST"; exit 1 ;;
 esac
 [ "$DEST" = "/volcano" ] && { warn "refusing to remove $DEST"; exit 1; }
-# Replace any prior install (also safely removes a dev symlink at this path).
-rm -rf "$DEST"
-cp -R "$src" "$DEST"
+# Copy to a sibling temp dir before replacing any prior install. This keeps a
+# failed copy from leaving the final plugin path half-populated.
+install_tmp="$(mktemp -d "$PLUGINS_DIR/.volcano-install.XXXXXX")"
+cp -R "$src" "$install_tmp/volcano"
+old_dest="$PLUGINS_DIR/.volcano-previous.$$"
+while [ -e "$old_dest" ] || [ -L "$old_dest" ]; do
+  old_dest="$old_dest.$$"
+done
+if [ -e "$DEST" ] || [ -L "$DEST" ]; then
+  mv "$DEST" "$old_dest"
+else
+  old_dest=""
+fi
+if ! mv "$install_tmp/volcano" "$DEST"; then
+  if [ -n "$old_dest" ] && { [ -e "$old_dest" ] || [ -L "$old_dest" ]; }; then
+    if mv "$old_dest" "$DEST"; then
+      old_dest=""
+    fi
+  fi
+  warn "failed to install plugin at $DEST"
+  exit 1
+fi
+if [ -n "$old_dest" ]; then
+  rm -rf "$old_dest"
+  old_dest=""
+fi
 
 log "installed the Volcano Cursor plugin to $DEST"
 log "restart Cursor (or run \"Developer: Reload Window\") to load it."
