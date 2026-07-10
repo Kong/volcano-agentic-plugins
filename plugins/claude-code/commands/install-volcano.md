@@ -387,7 +387,7 @@ else
   exit 1
 fi
 
-install_volcano_content || warn "could not install fallback AGENTS.md/skills; continuing"
+install_volcano_content
 wire_existing_claude_config
 ```
 
