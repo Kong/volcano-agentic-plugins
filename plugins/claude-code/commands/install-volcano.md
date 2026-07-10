@@ -7,7 +7,7 @@ allowed-tools: Bash, Read
 
 # Install or upgrade the Volcano CLI
 
-Use this skill when the user asks to install, refresh, update, or set up Volcano from this plugin.
+Use this command when the user asks to install, refresh, update, or set up Volcano from this plugin.
 
 This installer is adaptive. When run from a Volcano plugin, it uses the plugin-carried `skills/` directory as the primary skills source and copies the plugin-carried `AGENTS.md` into `~/.volcano/AGENTS.md` as a stable fallback/reference. When run outside a plugin/manual pathway, it installs `AGENTS.md` and skills into `~/.volcano` so `~/.volcano/skills` remains discoverable.
 
