@@ -15,9 +15,11 @@ function assert(condition, message) {
 function assertCliOnlyInstaller(content, label) {
   assert(content.includes("name: install-volcano"), `${label} must be named install-volcano`);
   assert(content.includes("volcano upgrade"), `${label} must upgrade an existing CLI with volcano upgrade`);
-  assert(content.includes("releases/latest/download"), `${label} must download latest CLI when missing`);
+  assert(content.includes("@volcano.dev/cli@latest"), `${label} must install the Volcano CLI from npm by default`);
+  assert(content.includes("npm install -g"), `${label} must use npm install -g for the default CLI install`);
+  assert(content.includes("releases/latest/download"), `${label} must keep GitHub release download as fallback`);
   assert(!content.includes("bootstrap.sh"), `${label} must not use bootstrap.sh`);
-  assert(!content.includes("--agent"), `${label} must not wire agent configs or download runtime skills`);
+  assert(!content.includes("--agent"), `${label} must not run full bootstrap agent wiring or download runtime skills`);
 }
 
 const cursorInstall = read("plugins/cursor/commands/install-volcano.md");
