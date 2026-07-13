@@ -27,28 +27,47 @@ ask before a cloud deploy.
    softer semantic checks; judge results are reported but non-blocking unless
    a scenario explicitly opts in.
 
-## Running it
+## Running it locally (no API key needed)
 
 ```sh
-# Structural lint only — no API key, no network. Runs in every CI build.
+# Structural lint only — no model call at all.
 pnpm eval:agent-guidance:lint
 
 # Deterministic self-test of the assertion logic itself, using hand-written
-# fixture responses (no API key, no network). Also runs in every CI build.
+# fixture responses (no model call at all).
 pnpm eval:agent-guidance:selftest
 
-# Live run against a real model. Requires OPENAI_API_KEY.
-OPENAI_API_KEY=sk-... pnpm eval:agent-guidance
+# Live run against a real model. Defaults to the local `claude` CLI — reuses
+# whatever Claude Code session you're already logged into, no API key setup
+# required. Runs each scenario with tools fully disabled (`--tools ""`) from
+# a scratch temp directory, so nothing it says can actually touch your repo
+# or run real commands.
+pnpm eval:agent-guidance
 ```
+
+Override the model with `AGENT_EVAL_MODEL=<name> pnpm eval:agent-guidance` (any
+`claude --model` alias/full name). Default is `sonnet` — `haiku` was observed
+to hang/exceed even a generous timeout on these scenarios; `sonnet` is
+reliable but each call can genuinely take 30–160s (a full `AGENTS.md` as
+system prompt is large). Run a single scenario while iterating:
+
+```sh
+AGENT_EVAL_SCENARIO_FILTER=build-bare-not-authenticated pnpm eval:agent-guidance
+```
+
+To use OpenAI instead (e.g. to match what CI runs), set `OPENAI_API_KEY` —
+it's preferred automatically when present. Force a specific provider with
+`AGENT_EVAL_PROVIDER=claude-cli` or `AGENT_EVAL_PROVIDER=openai`.
 
 ## CI wiring
 
 - `check:agent-eval-lint` and `check:agent-eval-selftest` run unconditionally
-  in `.github/workflows/ci.yml` (fast, free, no secrets needed).
+  in `.github/workflows/ci.yml` (fast, free, no secrets, no model call).
 - `.github/workflows/agent-eval.yml` runs the live model eval on pull
-  requests, gated on `secrets.OPENAI_API_KEY` being configured. It's a no-op
-  (not a failure) when the secret isn't available, so forks/external
-  contributors never get blocked by it.
+  requests via the OpenAI provider, gated on `secrets.OPENAI_API_KEY` being
+  configured (GitHub Actions runners have no authenticated `claude` CLI
+  session to reuse). It's a no-op (not a failure) when the secret isn't
+  available, so forks/external contributors never get blocked by it.
 
 ## Adding a scenario
 
@@ -60,6 +79,20 @@ OPENAI_API_KEY=sk-... pnpm eval:agent-guidance
    the violating fixture isn't caught — this keeps the assertion logic honest
    independent of any live model call.
 3. Run `pnpm eval:agent-guidance:selftest` locally before opening a PR.
+
+## Known limitation: live results are not fully deterministic
+
+`eval:agent-guidance:lint` and `eval:agent-guidance:selftest` are fully
+deterministic (no model call). The live run is a real model call and is not
+— observed variance on this scenario set: the model sometimes hedges into
+"once you confirm, I'll ..., then stop for your go-ahead" for actions
+`AGENTS.md` explicitly marks automatic, even with an explicit
+anti-hedging instruction in the harness's system framing (see
+`buildSystemPrompt` in `scripts/lib/agent-eval-runner.mjs`). Treat a live-run
+failure as a real signal to investigate (it may be a genuine compliance gap,
+as above), not as a hard, always-reproducible regression gate. This is also
+why the CI workflow only runs it as an informational PR check rather than
+blocking merges outright.
 
 **Gotcha:** the `Next:` line assertions check literal `\n`-delimited lines.
 Don't hand-wrap a `Next: ...` fixture string across multiple array entries in
