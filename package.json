@@ -21,6 +21,9 @@
     "check:codex": "node scripts/check-codex.mjs",
     "check:install-entrypoints": "node scripts/check-install-entrypoints.mjs",
     "check:marketplace-assets": "node scripts/check-marketplace-assets.mjs",
+    "eval:agent-guidance:lint": "node scripts/eval-agent-guidance.mjs --lint",
+    "eval:agent-guidance:selftest": "node scripts/eval-agent-guidance-selftest.mjs",
+    "eval:agent-guidance": "node scripts/eval-agent-guidance.mjs",
     "package:vscode": "pnpm --filter volcano package",
     "package:claude-desktop": "npx --yes @anthropic-ai/mcpb validate plugins/claude-desktop/manifest.json && rm -f /tmp/volcano-claude-desktop.mcpb && npx --yes @anthropic-ai/mcpb pack plugins/claude-desktop /tmp/volcano-claude-desktop.mcpb"
   },

@@ -50,6 +50,12 @@ jobs:
       - name: Check marketplace assets and metadata
         run: pnpm check:marketplace-assets
 
+      - name: Lint agent-behavior eval scenarios
+        run: pnpm eval:agent-guidance:lint
+
+      - name: Self-test agent-behavior eval assertion logic
+        run: pnpm eval:agent-guidance:selftest
+
       - name: Typecheck
         run: pnpm -r typecheck
 
