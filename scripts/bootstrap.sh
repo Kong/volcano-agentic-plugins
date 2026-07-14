@@ -332,10 +332,14 @@ find_plugin_skills_dir() {
         "$HOME/.cursor"; do
         [ -d "$root" ] || continue
         # -maxdepth bounds the walk to where a plugin-carried skills/AGENTS.md
-        # actually lives (root/<plugin>/skills/AGENTS.md); without it this can
-        # crawl huge unrelated trees (session transcripts, node_modules, etc.)
-        # on every invocation.
-        found="$(find "$root" -maxdepth 3 -type f -path '*/skills/AGENTS.md' 2>/dev/null | while IFS= read -r file; do
+        # actually lives. Real marketplace/cache layouts nest deeper than a
+        # single plugin dir, e.g.
+        # ~/.claude/plugins/cache/volcano-agentic-plugins/volcano/<ver>/skills/AGENTS.md
+        # (depth 6) and ~/.cursor/plugins/local/volcano/skills/AGENTS.md (depth 5) —
+        # 7 covers those with headroom. The roots themselves are scoped to
+        # */plugins (or ~/.cursor, which has no large unrelated trees), so this
+        # stays bounded — it does not crawl ~/.claude/projects or ~/.claude/todos.
+        found="$(find "$root" -maxdepth 7 -type f -path '*/skills/AGENTS.md' 2>/dev/null | while IFS= read -r file; do
             dir="$(dirname "$file")"
             if is_plugin_skills_dir "$dir"; then
                 printf '%s\n' "$dir"
