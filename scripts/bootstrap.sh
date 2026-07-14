@@ -36,6 +36,22 @@ log() { printf '%s\n' "volcano: $*"; }
 warn() { printf '%s\n' "volcano: $*" >&2; }
 have() { command -v "$1" >/dev/null 2>&1; }
 
+home_relative() {
+    # Echo a ~-prefixed path when under $HOME (portable, readable), else as-is.
+    case "$1" in
+    "$HOME"/*) printf '~/%s' "${1#"$HOME"/}" ;;
+    *) printf '%s' "$1" ;;
+    esac
+}
+
+home_shell_path() {
+    # Echo a shell-friendly path that keeps $HOME expansion for copied commands.
+    case "$1" in
+    "$HOME"/*) printf '$HOME/%s' "${1#"$HOME"/}" ;;
+    *) printf '%s' "$1" ;;
+    esac
+}
+
 while [ $# -gt 0 ]; do
     case "$1" in
     --agent)
@@ -214,10 +230,7 @@ install_cli_from_release() {
     case "$os" in
     linux*) os="linux" ;;
     darwin*) os="macos" ;;
-    mingw* | msys* | cygwin*)
-        warn "unsupported OS '$os'; cannot install Volcano CLI from GitHub release"
-        return 1
-        ;;
+    mingw* | msys* | cygwin*) os="windows" ;;
     *)
         warn "unsupported OS '$os'; cannot install Volcano CLI from GitHub release"
         return 1
@@ -286,6 +299,7 @@ install_or_upgrade_cli() {
         volcano --version || true
     else
         warn "Volcano CLI installation did not leave 'volcano' on PATH. Try: . \"$HOME/.volcano/env\""
+        return 1
     fi
 }
 
@@ -366,6 +380,11 @@ install_manual_skills() {
 
     names="$(grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' "$manifest" | sed 's/.*"\([^"]*\)"$/\1/')"
     rm -f "$manifest"
+    if [ -z "$names" ]; then
+        warn "skills manifest had no skill names; $VOLCANO_HOME/skills not updated"
+        return 1
+    fi
+
     for name in $names; do
         case "$name" in
         *[!A-Za-z0-9._-]* | '')
@@ -443,22 +462,24 @@ link_skills() {
 # ---------------------------------------------------------------------------
 # Per-agent wiring.
 # ---------------------------------------------------------------------------
+VOLCANO_HOME_LABEL="$(home_relative "$VOLCANO_HOME")"
+VOLCANO_HOME_SHELL="$(home_shell_path "$VOLCANO_HOME")"
 POINTER_TEXT=$(cat <<EOF
-Before any Volcano work, make sure ~/.volcano/AGENTS.md exists and is non-empty. If it is missing or empty, download the canonical instructions first:
+Before any Volcano work, make sure $VOLCANO_HOME_LABEL/AGENTS.md exists and is non-empty. If it is missing or empty, download the canonical instructions first:
 
 \`\`\`sh
-mkdir -p ~/.volcano
-curl -fsSL "$WEB_URL/AGENTS.md" -o ~/.volcano/AGENTS.md
+mkdir -p "$VOLCANO_HOME_SHELL"
+curl -fsSL "$WEB_URL/AGENTS.md" -o "$VOLCANO_HOME_SHELL/AGENTS.md"
 \`\`\`
 
-Then read ~/.volcano/AGENTS.md and follow its safety model (read-only/preview actions are automatic; production deploys, deletions, secret/variable changes, permission changes, and billing require confirmation).
+Then read $VOLCANO_HOME_LABEL/AGENTS.md and follow its safety model (read-only/preview actions are automatic; production deploys, deletions, secret/variable changes, permission changes, and billing require confirmation).
 EOF
 )
 
 wire_claude() {
     upsert_block "$HOME/.claude/CLAUDE.md" "$POINTER_TEXT
 
-@~/.volcano/AGENTS.md"
+@$VOLCANO_HOME_LABEL/AGENTS.md"
     link_skills "$HOME/.claude/skills"
 }
 
@@ -524,7 +545,8 @@ detect_agents() {
 }
 
 main() {
-    install_or_upgrade_cli
+    cli_ok=1
+    install_or_upgrade_cli || cli_ok=0
     install_canonical
 
     if [ -n "$AGENT" ]; then
@@ -545,7 +567,14 @@ main() {
     done
 
     log "done. Canonical AGENTS.md/skills in $VOLCANO_HOME"
-    print_welcome
+
+    if [ "$cli_ok" = "1" ]; then
+        print_welcome
+    else
+        warn "AGENTS.md/skills/agent wiring completed, but the Volcano CLI is not installed."
+        warn "Fix the CLI install (see the warning above), then re-run this script — it is idempotent."
+        exit 1
+    fi
 }
 
 print_welcome() {
