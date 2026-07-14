@@ -39,7 +39,11 @@ have() { command -v "$1" >/dev/null 2>&1; }
 while [ $# -gt 0 ]; do
     case "$1" in
     --agent)
-        AGENT="${2:-}"
+        if [ $# -lt 2 ]; then
+            warn "--agent requires a value (claude, codex, or cursor)"
+            exit 2
+        fi
+        AGENT="$2"
         shift 2
         ;;
     --agent=*)
@@ -269,7 +273,7 @@ install_or_upgrade_cli() {
         fi
     else
         log "Volcano CLI not found; installing from npm"
-        install_cli_from_npm || install_cli_from_release
+        install_cli_from_npm || install_cli_from_release || warn "CLI install failed; continuing without it"
     fi
 
     if ! have volcano && [ -f "$HOME/.volcano/env" ]; then
@@ -325,10 +329,13 @@ find_plugin_skills_dir() {
     for root in \
         "$HOME/.codex/plugins" \
         "$HOME/.claude/plugins" \
-        "$HOME/.claude" \
         "$HOME/.cursor"; do
         [ -d "$root" ] || continue
-        found="$(find "$root" -type f -path '*/skills/AGENTS.md' 2>/dev/null | while IFS= read -r file; do
+        # -maxdepth bounds the walk to where a plugin-carried skills/AGENTS.md
+        # actually lives (root/<plugin>/skills/AGENTS.md); without it this can
+        # crawl huge unrelated trees (session transcripts, node_modules, etc.)
+        # on every invocation.
+        found="$(find "$root" -maxdepth 3 -type f -path '*/skills/AGENTS.md' 2>/dev/null | while IFS= read -r file; do
             dir="$(dirname "$file")"
             if is_plugin_skills_dir "$dir"; then
                 printf '%s\n' "$dir"
