@@ -577,23 +577,94 @@ main() {
     fi
 }
 
+# ── Welcome banner ───────────────────────────────────────────────────────────
+# A colored, gently-erupting ASCII volcano shown after a successful bootstrap.
+# Degrades safely: no color when NO_COLOR is set, output is not a TTY, or the
+# terminal is dumb; no animation when the terminal can't redraw (a single static
+# frame is printed instead). Set VOLCANO_NO_ANIMATION=1 to force the static path.
+
+_volcano_setup_colors() {
+    if [ -z "${NO_COLOR:-}" ] && [ -t 1 ] && [ "${TERM:-}" != "dumb" ]; then
+        SMK='\033[38;5;245m'   # ash / smoke
+        RIM='\033[38;5;238m'   # crater rim rock
+        WHT='\033[1;38;5;231m' # white-hot core
+        ORG='\033[38;5;208m'   # orange lava
+        R1='\033[38;5;202m'    # hottest rock
+        R2='\033[38;5;196m'    # red rock
+        R3='\033[38;5;160m'    # cooler rock
+        R4='\033[38;5;124m'    # coolest base rock
+        GRD='\033[38;5;238m'   # ground shadow
+        N='\033[0m'
+        COLOR=1
+    else
+        SMK='' RIM='' WHT='' ORG='' R1='' R2='' R3='' R4='' GRD='' N=''
+        COLOR=0
+    fi
+}
+
+# Print one 16-line frame of the volcano for eruption stage $1 (0..3). The cone
+# is identical across stages (fixed height, so an in-place redraw stays aligned);
+# only the smoke plume and the crater/overflow heat colors change.
+_volcano_frame() {
+    case "$1" in
+    0) POOL="$R4" OACC="$R3" s1='' s2='' s3='' s4='' ;;
+    1) POOL="$ORG" OACC="$R2" s1='' s2='' s3='' s4="             ${SMK}. ~ .${N}" ;;
+    2) POOL="$WHT" OACC="$ORG" s1='' s2="              ${SMK}. '${N}" s3="            ${SMK}( ~~~ )${N}" s4="             ${SMK}~ ~ ~${N}" ;;
+    *) POOL="$WHT" OACC="$ORG" s1="           ${SMK}.   '   .${N}" s2="        ${SMK}'    ( )    *${N}" s3="           ${SMK}( ~~~ )${N}" s4="            ${SMK}~ ~ ~${N}" ;;
+    esac
+
+    printf '%b\n' "$s1"
+    printf '%b\n' "$s2"
+    printf '%b\n' "$s3"
+    printf '%b\n' "$s4"
+    printf '%b\n' "             ${RIM}#${POOL}######${RIM}#${N}"
+    printf '%b\n' "            ${RIM}#${POOL}########${RIM}#${N}"
+    printf '%b\n' "            ${RIM}#${OACC}########${RIM}#${N}"
+    printf '%b\n' "           ${R1}##${OACC}########${R1}##${N}"
+    printf '%b\n' "          ${R1}###${OACC}########${R1}###${N}"
+    printf '%b\n' "         ${R1}####${OACC}########${R1}####${N}"
+    printf '%b\n' "        ${R2}########${OACC}##${R2}########${N}"
+    printf '%b\n' "       ${R2}#########${OACC}##${R2}#########${N}"
+    printf '%b\n' "      ${R3}##########${OACC}##${R3}##########${N}"
+    printf '%b\n' "     ${R3}###########${OACC}##${R3}###########${N}"
+    printf '%b\n' "    ${R4}##########################${N}"
+    printf '%b\n' "   ${GRD}============================${N}"
+}
+
+# Only animate on a color TTY that supports sub-second sleeps and where the user
+# hasn't opted out. Everything else gets a single static frame.
+_volcano_can_animate() {
+    [ "$COLOR" = 1 ] || return 1
+    [ -z "${VOLCANO_NO_ANIMATION:-}" ] || return 1
+    sleep 0.02 2>/dev/null || return 1
+    return 0
+}
+
+_volcano_animate() {
+    height=16
+    printf '\033[?25l' # hide cursor
+    trap 'printf "\033[?25h"' INT TERM
+    first=1
+    for stage in 0 1 2 3; do
+        if [ "$first" -eq 0 ]; then
+            printf '\033[%dA' "$height" # move back to the top of the frame
+            printf '\033[0J'            # clear the frame area
+        fi
+        _volcano_frame "$stage"
+        first=0
+        if [ "$stage" -lt 3 ]; then sleep 0.09; fi
+    done
+    printf '\033[?25h' # show cursor
+    trap - INT TERM
+}
+
 print_welcome() {
-    R='\033[38;5;196m'
-    O='\033[38;5;208m'
-    Y='\033[38;5;226m'
-    D='\033[38;5;52m'
-    K='\033[38;5;16m'
-    N='\033[0m'
-    printf "%b\n" "       ${K}##${N}        "
-    printf "%b\n" "     ${R}#${O}##${K}##${N}      "
-    printf "%b\n" "    ${R}##${O}####${K}##${N}    "
-    printf "%b\n" "     ${D}##${R}##${K}##${N}${K}      "
-    printf "%b\n" "      ${D}##${R}##${N}${K}      "
-    printf "%b\n" "    ${K}##${R}##${O}##${N}${K}##      "
-    printf "%b\n" "  ${K}##${D}##${R}##${O}##${N}${R}##${K}##    "
-    printf "%b\n" "  ${K}##${D}##${R}##${Y}##${O}##${N}${R}##${K}##  "
-    printf "%b\n" "${K}##${D}##${R}##${O}##${Y}####${O}##${R}##${K}##${N}"
-    printf "%b\n" "${K}####################${N}"
+    _volcano_setup_colors
+    if _volcano_can_animate; then
+        _volcano_animate
+    else
+        _volcano_frame 3
+    fi
     printf '\n'
     printf '  Volcano is set up and ready.\n'
     printf '  What would you like to build?\n'
