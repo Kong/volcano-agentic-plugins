@@ -10,11 +10,6 @@ on:
     # Daily at 06:17 UTC.
     - cron: "17 6 * * *"
   workflow_dispatch:
-    inputs:
-      ref:
-        description: "volcano-skills ref to sync to (default: its default-branch HEAD)"
-        required: false
-        default: ""
 
 permissions:
   contents: write
@@ -58,23 +53,22 @@ jobs:
           set -euo pipefail
           cd sources/volcano-skills
           git fetch origin
-          if [ -n "${{ github.event.inputs.ref }}" ]; then
-            target="${{ github.event.inputs.ref }}"
-            git fetch origin "$target" || true
-            git checkout --detach "$target" 2>/dev/null || git checkout --detach FETCH_HEAD
-          else
-            # Match check:skill-submodules, which compares against `ls-remote HEAD`
-            # (the remote default branch tip).
-            git remote set-head origin --auto >/dev/null
-            git checkout --detach origin/HEAD
-          fi
+          # Track the canonical default-branch HEAD, matching check:skill-submodules
+          # which compares the pin against `git ls-remote <url> HEAD`.
+          git remote set-head origin --auto >/dev/null
+          git checkout --detach origin/HEAD
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Regenerate materialized plugin skills
         run: pnpm sync:skills
 
+      - name: Stage submodule bump and regenerated skills
+        run: git add sources/volcano-skills plugins
+
       - name: Validate sync
+        # Runs after staging: check:skill-submodules reads the pin from the index
+        # (git ls-files --stage), so the new gitlink must be staged first.
         run: |
           pnpm check:skill-submodules
           pnpm check:skill-drift
@@ -84,7 +78,7 @@ jobs:
           GH_TOKEN: ${{ secrets.SKILLS_SYNC_TOKEN || github.token }}
         run: |
           set -euo pipefail
-          if git diff --quiet && git diff --cached --quiet; then
+          if git diff --cached --quiet; then
             echo "sources/volcano-skills already matches ${{ steps.bump.outputs.short }}; nothing to sync."
             exit 0
           fi
@@ -103,13 +97,15 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Changes were already staged before validation; keep them across the
+          # branch switch and commit from the index.
           git checkout -B "$branch"
-          git add sources/volcano-skills plugins
           git commit -m "$title"
           git push --force-with-lease origin "$branch"
 
           if [ -n "$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" ]; then
-            echo "Existing open PR for $branch updated by push."
+            gh pr edit "$branch" --title "$title" --body "$body"
+            echo "Refreshed existing PR for $branch to ${{ steps.bump.outputs.short }}."
           else
             gh pr create --base main --head "$branch" --title "$title" --body "$body"
           fi
