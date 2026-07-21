@@ -88,7 +88,7 @@ jobs:
           # Don't persist an authenticated remote yet: the PR's own
           # package.json/pnpm-lock.yaml/scripts run below (pnpm install) before
           # the token is actually needed, and this job's token may be a more
-          # powerful SKILLS_SYNC_TOKEN. Re-authenticate explicitly just before
+          # powerful TEMP_PAT_TOKEN. Re-authenticate explicitly just before
           # the push step instead.
           persist-credentials: false
 
@@ -149,7 +149,7 @@ jobs:
       - name: Open sync PR into the failing PR's branch
         if: steps.recheck.outputs.is_drift == 'true'
         env:
-          GH_TOKEN: ${{ secrets.SKILLS_SYNC_TOKEN || github.token }}
+          GH_TOKEN: ${{ secrets.TEMP_PAT_TOKEN || github.token }}
           # Route untrusted event data through env instead of interpolating
           # ${{ }} expressions directly into the script: head.ref is the PR
           # author's own branch name and must not be textually substituted
