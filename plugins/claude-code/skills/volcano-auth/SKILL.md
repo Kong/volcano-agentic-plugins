@@ -12,6 +12,52 @@ Implement robust Volcano authentication journeys with session lifecycle correctn
 2. Restore the session on app startup with `volcano.initialize()`.
 3. Add `onAuthStateChange` listener and ensure cleanup on teardown.
 4. Keep OAuth initiation in browser contexts only; validate error paths.
+5. If the user's prompt doesn't specify signup/login page design or behavior, apply the "Default Signup & Login Page UX" below instead of asking — including the signup-success alert, which is on by default.
+
+## Default Signup & Login Page UX
+When the prompt doesn't say what the signup/login pages should look like or do, default to this instead of leaving them unstyled or asking a clarifying question:
+- **Signup page:** email + password fields (add a name field only if the app's metadata clearly needs one), a submit button, an inline error banner driven by `error.message`, and a link to the login page.
+- **Login page:** email + password fields, a submit button, an inline error banner, a link to the signup page, and a "forgot password" link.
+- **Signup success alert (default, always on):** on a successful `signUp` call, show a visible success alert/banner on the signup page — e.g. "Signup successful! Check your email to verify your account." — before navigating away. Do this even when the user didn't ask for it; only omit it if the user explicitly says not to show one. A `setTimeout` redirect (2–3s) after showing the alert is fine, but the alert must render first.
+
+```tsx
+// Minimal default signup page with a success alert
+'use client';
+import { useState } from 'react';
+import { getVolcano } from '@/lib/volcano';
+
+export default function SignupPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const { error } = await getVolcano().auth.signUp({ email, password });
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setSuccess(true); // drives the default "Signup success" alert below
+  };
+
+  return (
+    <div>
+      {success && (
+        <div role="alert">Signup successful! Check your email to verify your account.</div>
+      )}
+      {error && <div role="alert">{error}</div>}
+      <form onSubmit={handleSubmit}>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
+        <button type="submit">Sign Up</button>
+      </form>
+    </div>
+  );
+}
+```
 
 ## Initialization
 ```ts
@@ -36,7 +82,7 @@ const { user, session, error } = await volcano.auth.signUp({
 });
 if (error) {
   if (error.message.includes('already exists')) /* email taken */;
-  else if (error.message.includes('weak password')) /* strengthen */;
+  else if (error.message.includes('password must')) /* strengthen — real messages: "password must be at least 8 characters", "...contain at least one uppercase letter", etc. */;
   else if (error.message.includes('invalid email')) /* validate */;
   return;
 }
@@ -48,8 +94,8 @@ if (error) {
 const { user, session, error } = await volcano.auth.signIn({ email, password });
 if (error) {
   if (error.message.includes('invalid email or password')) /* wrong creds */;
-  else if (error.message.includes('email not confirmed')) /* prompt confirm */;
-  else if (error.message.includes('too many attempts')) /* rate-limited */;
+  else if (error.message.includes('confirm your email')) /* prompt confirm — real message: "Please confirm your email address before signing in." */;
+  else if (error.message.includes('rate limit')) /* rate-limited — real message: "rate limit exceeded, try again later" */;
   return;
 }
 // SDK auto-stores tokens in localStorage (browser) and schedules refresh.
@@ -212,17 +258,18 @@ await volcano.auth.deleteAllOtherSessions();
 - Treat `onAuthStateChange(user => null)` as a definitive sign-out signal: redirect to the login flow.
 
 ## Common Errors
-| Message contains | Meaning | Action |
-|---|---|---|
-| `already exists` | Email taken on sign up | Prompt sign in |
-| `weak password` | Password too weak | Show strength rules |
-| `invalid email or password` | Wrong email/password | Re-prompt |
-| `email not confirmed` | Verification pending | Show resend UI |
-| `too many attempts` | Rate-limited | Back off and inform user |
-| `No active session` | User not logged in | Send to login |
-| `Session expired` | Refresh failed | Force sign in |
+| Message contains | Real example message | Meaning | Action |
+|---|---|---|---|
+| `already exists` | `user with this email already exists` | Email taken on sign up | Prompt sign in |
+| `password must` | `password must be at least 8 characters` / `password must contain at least one uppercase letter` / `...one number` / `...one special character (!@#$%^&*)` | Password too weak | Show strength rules |
+| `invalid email or password` | `invalid email or password` | Wrong email/password | Re-prompt |
+| `confirm your email` | `Please confirm your email address before signing in.` (sign-in gate) or `email confirmation required - please check your email for confirmation link` (signup) | Verification pending | Show resend UI |
+| `rate limit` | `rate limit exceeded, try again later` | Rate-limited | Back off and inform user |
+| `No active session` | `No active session` | User not logged in | Send to login |
+| `Session expired` | `Session expired` | Refresh failed | Force sign in |
 
 ## Verification Checklist
+- If the prompt didn't specify signup/login page design, the "Default Signup & Login Page UX" was applied, including the default signup-success alert.
 - Session restore (`volcano.initialize()`) is wired at app startup.
 - `onAuthStateChange` listener has a paired `unsubscribe()` on teardown.
 - OAuth methods are only called from browser contexts.
