@@ -51,6 +51,29 @@ Then review and commit both:
 Do not restore plugin-local skill submodules. `pnpm check:skill-submodules`
 rejects that.
 
+### Automated sync
+
+Two automations reduce reliance on someone remembering to run the manual steps
+above:
+
+- `.github/workflows/sync-skills.yml` runs daily (06:17 UTC) and on demand
+  (`workflow_dispatch`). It bumps `sources/volcano-skills` to the canonical
+  repo's default-branch HEAD, regenerates materialized skills, and opens or
+  refreshes a `chore/sync-volcano-skills` PR against `main` when there's
+  drift. This is what keeps `main` from drifting when no one has an open PR.
+- The `auto-fix-skill-drift` job in `.github/workflows/ci.yml` runs whenever
+  an open PR's `validate` job fails specifically because of skill drift (it
+  re-checks `check:skill-submodules` on its own before doing anything, so
+  unrelated CI failures are left alone). It opens a small
+  `chore/sync-volcano-skills-<pr-number>` PR with the bump, based on that
+  PR's own branch — not `main` — labels the original PR `needs-skills-sync`,
+  and comments with a link to the fix-up PR.
+
+Both automations only ever open PRs for a human to review and merge; neither
+ever pushes directly to someone else's branch or merges anything itself.
+`main` also has branch protection requiring the `validate` check to pass, so a
+PR left failing on skill drift cannot be merged until the fix-up PR lands.
+
 ## Validation before committing
 
 Run the main pnpm checks locally:
@@ -223,3 +246,15 @@ CI runs on Node 24 and should include:
 
 If a change cannot satisfy one of these checks, treat it as a release blocker
 unless the invariant itself is intentionally changed and documented here.
+
+`main` is branch-protected and requires the `validate` job to pass before a
+PR can merge. If `validate` fails because of skill drift, see "Automated
+sync" above — a `needs-skills-sync`-labeled companion PR gets opened
+automatically against the failing PR's own branch.
+
+Third-party actions referenced from `.github/workflows/*.yml` are pinned to a
+full commit SHA with a trailing `# vX.Y.Z` comment, not a mutable tag
+(CodeQL's `actions/unpinned-tag` check enforces this). When bumping an
+action, resolve the new tag's commit with
+`git ls-remote https://github.com/<owner>/<repo>.git refs/tags/<tag>^{}` and
+update every occurrence of that action across all three workflow files.
