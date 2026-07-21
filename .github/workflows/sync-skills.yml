@@ -4,12 +4,19 @@ name: Sync skills submodule
 # default-branch HEAD and regenerates the materialized per-plugin skills.
 # CI's check:skill-submodules fails whenever the pin lags that HEAD, so this
 # workflow opens the sync PR automatically instead of waiting for a human.
+#
+# repository_dispatch is fired by volcano-skills's notify-agentic-plugins-sync.yml
+# on every push to its main, so syncs happen immediately rather than waiting
+# for the daily cron. schedule/workflow_dispatch stay as a safety net + manual
+# override.
 
 on:
   schedule:
     # Daily at 06:17 UTC.
     - cron: "17 6 * * *"
   workflow_dispatch:
+  repository_dispatch:
+    types: [volcano-skills-updated]
 
 permissions:
   contents: write
