@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -61,3 +64,114 @@ jobs:
 
       - name: Package Claude Desktop MCPB
         run: pnpm package:claude-desktop
+
+  auto-fix-skill-drift:
+    name: Auto-sync volcano-skills into failing PR
+    needs: validate
+    if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    concurrency:
+      group: sync-into-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          submodules: recursive
+          fetch-depth: 0
+          # Falls back to GITHUB_TOKEN; a PR opened with GITHUB_TOKEN won't
+          # itself trigger CI, but merging it into the feature branch does.
+          # Provide SKILLS_SYNC_TOKEN (a PAT / app token) to change that.
+          token: ${{ secrets.SKILLS_SYNC_TOKEN || github.token }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Confirm skill submodule drift caused the failure
+        id: recheck
+        run: |
+          set -euo pipefail
+          # validate can fail for unrelated reasons (typecheck, packaging, etc.);
+          # only proceed if the skill submodule pin is actually stale.
+          if pnpm check:skill-submodules; then
+            echo "is_drift=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_drift=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump volcano-skills submodule
+        if: steps.recheck.outputs.is_drift == 'true'
+        id: bump
+        run: |
+          set -euo pipefail
+          cd sources/volcano-skills
+          git fetch origin
+          # Match check:skill-submodules, which compares against `ls-remote HEAD`
+          # (the remote default branch tip).
+          git remote set-head origin --auto >/dev/null
+          git checkout --detach origin/HEAD
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Regenerate materialized plugin skills
+        if: steps.recheck.outputs.is_drift == 'true'
+        run: pnpm sync:skills
+
+      - name: Stage submodule bump and regenerated skills
+        if: steps.recheck.outputs.is_drift == 'true'
+        run: git add sources/volcano-skills plugins
+
+      - name: Validate sync
+        if: steps.recheck.outputs.is_drift == 'true'
+        run: |
+          pnpm check:skill-submodules
+          pnpm check:skill-drift
+
+      - name: Open sync PR into the failing PR's branch
+        if: steps.recheck.outputs.is_drift == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SKILLS_SYNC_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          pr_number="${{ github.event.pull_request.number }}"
+          feature_branch="${{ github.event.pull_request.head.ref }}"
+          sync_branch="chore/sync-volcano-skills-${pr_number}"
+          title="chore: sync volcano-skills submodule into #${pr_number}"
+          body="Automated sync of \`sources/volcano-skills\` to \`${{ steps.bump.outputs.short }}\`, unblocking #${pr_number} whose \`check:skill-submodules\` check is failing because its pin is behind the canonical repo's HEAD.
+
+          Merge this into \`${feature_branch}\` to unblock CI on #${pr_number}."
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$sync_branch"
+          git commit -m "$title"
+          git push --force-with-lease origin "$sync_branch"
+
+          gh label create "needs-skills-sync" --color "FBCA04" \
+            --description "Blocked on an automated volcano-skills submodule sync PR" --force
+
+          if [ -n "$(gh pr list --head "$sync_branch" --state open --json number --jq '.[].number')" ]; then
+            gh pr edit "$sync_branch" --title "$title" --body "$body"
+          else
+            gh pr create --base "$feature_branch" --head "$sync_branch" --title "$title" --body "$body"
+          fi
+          sync_pr_number="$(gh pr list --head "$sync_branch" --state open --json number --jq '.[0].number')"
+
+          gh pr edit "$pr_number" --add-label "needs-skills-sync"
+          gh pr comment "$pr_number" --body "⚠️ \`volcano-skills\` has moved upstream and this PR's \`check:skill-submodules\` check is failing as a result. Opened #${sync_pr_number} with the submodule bump — merge it into \`${feature_branch}\` to unblock CI here."
