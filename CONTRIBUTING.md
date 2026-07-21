@@ -251,3 +251,10 @@ unless the invariant itself is intentionally changed and documented here.
 PR can merge. If `validate` fails because of skill drift, see "Automated
 sync" above — a `needs-skills-sync`-labeled companion PR gets opened
 automatically against the failing PR's own branch.
+
+Third-party actions referenced from `.github/workflows/*.yml` are pinned to a
+full commit SHA with a trailing `# vX.Y.Z` comment, not a mutable tag
+(CodeQL's `actions/unpinned-tag` check enforces this). When bumping an
+action, resolve the new tag's commit with
+`git ls-remote https://github.com/<owner>/<repo>.git refs/tags/<tag>^{}` and
+update every occurrence of that action across all three workflow files.
