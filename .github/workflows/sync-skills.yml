@@ -35,6 +35,11 @@ jobs:
         with:
           app-id: ${{ vars.VOLCANO_APP_ID }}
           private-key: ${{ secrets.VOLCANO_APP_KEY }}
+          # Without an explicit permission-* input, the minted token inherits
+          # every permission the App installation holds, not just what this
+          # job needs. Scope it down explicitly.
+          permission-contents: write
+          permission-pull-requests: write
 
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
