@@ -10,6 +10,7 @@ const pluginSkillDirs = [
   "plugins/claude-desktop/skills",
   "plugins/codex/skills",
 ];
+const EXCLUDED_BASENAMES = new Set([".git", ".DS_Store", ".github"]);
 
 if (!existsSync(path.join(sourceDir, "index.json"))) {
   throw new Error("sources/volcano-skills is not initialized; run git submodule update --init --recursive");
@@ -21,7 +22,11 @@ for (const pluginRel of pluginSkillDirs) {
   mkdirSync(path.dirname(pluginDir), { recursive: true });
   cpSync(sourceDir, pluginDir, {
     recursive: true,
-    filter: (src) => path.basename(src) !== ".git" && path.basename(src) !== ".DS_Store",
+    // .github is CI automation that lives in volcano-skills for its own repo,
+    // not skill content meant for distribution — exclude it alongside the
+    // other non-content entries. Keep in sync with check-skill-drift.mjs's
+    // identical exclusion list.
+    filter: (src) => !EXCLUDED_BASENAMES.has(path.basename(src)),
   });
   console.log(`Synced ${pluginRel} from sources/volcano-skills`);
 }
