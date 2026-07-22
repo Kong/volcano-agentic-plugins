@@ -10,6 +10,8 @@ const pluginSkillDirs = [
   "plugins/claude-desktop/skills",
   "plugins/codex/skills",
 ];
+// Keep in sync with sync-skills-from-source.mjs's identical exclusion list.
+const EXCLUDED_BASENAMES = new Set([".git", ".DS_Store", ".github"]);
 
 function rel(file) {
   return path.relative(root, file).split(path.sep).join("/");
@@ -20,7 +22,7 @@ function walkFiles(dir, base = dir) {
 
   const files = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === ".git" || entry.name === ".DS_Store") continue;
+    if (EXCLUDED_BASENAMES.has(entry.name)) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       files.push(...walkFiles(full, base));
