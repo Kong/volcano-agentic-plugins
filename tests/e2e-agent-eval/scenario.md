@@ -15,13 +15,24 @@
 ## Prompt
 
 ```
-Build me a todo API.
+Build me a todo API using volcano.
 ```
 
-Deliberately bare — no mention of local vs. cloud, no mention of deploying,
-no mention of testing. This is the exact example phrase `AGENTS.md` itself
-uses for the "build X" default-behavior rule, so it's the most realistic
-underspecified prompt to probe that rule with.
+Still bare on everything else (no mention of local vs. cloud, no mention of
+deploying, no mention of testing) but now names "volcano" explicitly. This
+changed from the original bare `AGENTS.md`-example prompt ("Build me a todo
+API", no product name) after a live run showed the agent has no reliable way
+to discover Volcano is relevant without an explicit mention: `AGENTS.md`
+isn't auto-loaded by the plugin mechanism itself (only the 12 domain skills'
+short descriptions are always-on, and none of them are worded to match a
+generic, product-unaware "build an app" prompt), so a fully bare prompt
+reliably produced a plain Express.js app with zero Volcano awareness. This
+prompt now isolates a different, narrower question: given the minimal signal
+a real user would actually type, does the agent then follow `AGENTS.md`'s
+default behaviors well (init → functions → auto local deploy → verify), or
+does it still thrash? The fully-bare-prompt / plugin-discoverability gap is
+tracked separately (VOL-473 covers the related install-skill-reliability
+finding from the same investigation).
 
 ## Expected path (per `AGENTS.md`'s own documented defaults)
 
@@ -60,6 +71,19 @@ explicitly not graded yet (DB/migration correctness, RLS, frontend, cloud).
 | Did it attempt `volcano cloud ...` unprompted? | should not happen in this scenario; flagged as a violation if seen |
 | Did it open a browser to diagnose anything? | should not happen; flagged as a violation if seen |
 | Final independent invoke result | `verification.json` — the actual pass/fail gate |
+
+## Methodology note: plan-first confirmation vs. one-shot harness
+
+A live run showed the agent (correctly, per `AGENTS.md`'s own precedence rule
+that user-level instruction files can override the plugin's auto-deploy
+default) can stop after presenting a plan and ask "want me to proceed?" when
+the operator's personal global `CLAUDE.md` says to plan before executing.
+That's reasonable for a real interactive user, but fatal for a single-turn
+`-p` harness with no one to answer — the session ends having built nothing.
+`run.sh` compensates with `--append-system-prompt` telling the agent
+specifically that this is a non-interactive eval session with no one to
+confirm with, so it should proceed — this does not change the scenario
+prompt itself, only the one-shot-harness mechanics.
 
 ## Out of scope for this cut (tracked, not tested yet)
 
