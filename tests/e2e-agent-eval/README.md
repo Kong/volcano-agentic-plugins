@@ -68,7 +68,7 @@ Env vars (all optional):
 |---|---|---|
 | `CLAUDE_EVAL_MODEL` | `sonnet` | Model alias/name passed to `claude --model` |
 | `CLAUDE_EVAL_MAX_BUDGET_USD` | unset | Caps spend via `claude --max-budget-usd` |
-| `CLAUDE_EVAL_TIMEOUT_SECS` | `900` | Wall-clock cap on the agent session |
+| `CLAUDE_EVAL_TIMEOUT_SECS` | `600` | Wall-clock cap on the agent session — 10 minutes is intentionally generous for a simple todo API build/deploy/verify; a run that needs longer is itself a finding, not a reason to raise this |
 | `CLAUDE_EVAL_PROMPT` | see `scenario.md` | Override the prompt |
 | `CLAUDE_EVAL_KEEP_SANDBOX` | unset | Skip deleting the scratch dir afterward |
 
@@ -84,11 +84,45 @@ agent's self-reported "done"). Results land in `results/<timestamp>/`:
   (`analyze-transcript.mjs`): `--help` call count, failed-command count,
   same-file rewrite count, tool-call count.
 - `verification.json` — independent post-hoc checks: was the local stack up,
-  which functions were deployed, what each `volcano functions invoke` call
-  returned.
+  which functions were deployed, and the result of invoking each one
+  **authenticated** (a real session minted via the SDK — see
+  `invoke-with-auth.mjs`; `volcano functions invoke` the CLI command has no
+  way to supply a bearer token, and a correctly-secured function 401s
+  without one, so testing unauthenticated would fail secure functions and
+  pass insecure ones).
 - `report.md` — human-readable summary of the above plus pass/fail.
 
 `results/` is gitignored — it holds run output, not tracked test source.
+
+## Findings so far (from real runs, not speculation)
+
+- **Bare prompt with no product name never engages the plugin.** "Build me a
+  todo API" (no mention of "volcano") produced a plain Express.js app with
+  zero Volcano awareness — the plugin's 12 skills are only loaded on-invoke,
+  and none of their descriptions are worded to match a generic,
+  product-unaware "build an app" request. `scenario.md`'s prompt now says
+  "...using volcano" to isolate a different question (does it follow the
+  skills well once engaged) from this one (tracked in
+  [VOL-473](https://konghq.atlassian.net/browse/VOL-473) alongside a related
+  finding, not yet fixed).
+- **The `install-volcano` skill's embedded script isn't reliably executed
+  verbatim.** Invoking it explicitly (`claude -p "/volcano:install-volcano"`)
+  ran a model-reconstructed, shortened version that silently dropped the
+  steps that matter (maintaining `~/.volcano/AGENTS.md` and the
+  `~/.claude/CLAUDE.md` import), while reporting success. Tracked in
+  [VOL-473](https://konghq.atlassian.net/browse/VOL-473).
+- **Migration guidance contradicted the live CLI (fixed).** `AGENTS.md`'s
+  guidance said to wrap multi-statement migrations in `BEGIN; ... COMMIT;`;
+  the real CLI executes each file as exactly one statement and rejects
+  multi-statement bodies. An agent run hit this, burned two failed attempts
+  and a scratch experiment discovering the constraint itself, then split one
+  migration into 12 files by hand. Fixed in `volcano-skills`
+  [PR #15](https://github.com/Kong/volcano-skills/pull/15).
+- **Once engaged, skill routing and architecture reasoning were essentially
+  textbook** — correct skill load order, correct one-function-per-file
+  convention, correct RLS/auth-in-handler pattern, and it used `volcano docs
+  search`/`volcano docs get` mid-troubleshooting instead of blind `--help`
+  guessing.
 
 ## Known limitations
 
