@@ -2,7 +2,6 @@ name: CI
 
 on:
   pull_request:
-  merge_group:
   push:
     branches: [main]
 
@@ -34,15 +33,6 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Check canonical skill source submodule is latest
-        # Compares the pinned commit against volcano-skills's LIVE remote
-        # HEAD, an independently-evolving repo unrelated to this PR's own
-        # diff — upstream can drift between queueing and this check running.
-        # merge_group has no self-heal path (auto-fix-skill-drift below only
-        # runs for pull_request, since it needs a real branch to push into),
-        # so don't let this specific staleness check fail the merge queue.
-        # check:skill-drift below still validates the pinned commit is
-        # internally consistent, in every context including merge_group.
-        if: github.event_name != 'merge_group'
         run: pnpm check:skill-submodules
 
       - name: Check materialized plugin skills match canonical source
