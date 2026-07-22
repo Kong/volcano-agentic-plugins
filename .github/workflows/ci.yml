@@ -2,7 +2,6 @@ name: CI
 
 on:
   pull_request:
-  merge_group:
   push:
     branches: [main]
 
@@ -34,15 +33,6 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Check canonical skill source submodule is latest
-        # Compares the pinned commit against volcano-skills's LIVE remote
-        # HEAD, an independently-evolving repo unrelated to this PR's own
-        # diff — upstream can drift between queueing and this check running.
-        # merge_group has no self-heal path (auto-fix-skill-drift below only
-        # runs for pull_request, since it needs a real branch to push into),
-        # so don't let this specific staleness check fail the merge queue.
-        # check:skill-drift below still validates the pinned commit is
-        # internally consistent, in every context including merge_group.
-        if: github.event_name != 'merge_group'
         run: pnpm check:skill-submodules
 
       - name: Check materialized plugin skills match canonical source
@@ -80,14 +70,26 @@ jobs:
     needs: validate
     if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
+    # No ambient GITHUB_TOKEN use: auth is entirely via the App-minted token below.
+    permissions: {}
     concurrency:
       group: sync-into-pr-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     steps:
+      - name: Generate token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.VOLCANO_APP_ID }}
+          private-key: ${{ secrets.VOLCANO_APP_KEY }}
+          # Without an explicit permission-* input, the minted token inherits
+          # every permission the App installation holds, not just what this
+          # job needs (push a branch, open/edit the PR, and label/comment on
+          # the original PR). Scope it down explicitly.
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+
       - name: Checkout PR head
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -96,8 +98,8 @@ jobs:
           fetch-depth: 0
           # Don't persist an authenticated remote yet: the PR's own
           # package.json/pnpm-lock.yaml/scripts run below (pnpm install) before
-          # the token is actually needed, and this job's token may be a more
-          # powerful TEMP_PAT_TOKEN. Re-authenticate explicitly just before
+          # the token is actually needed, and this job's token is the more
+          # powerful App-minted one. Re-authenticate explicitly just before
           # the push step instead.
           persist-credentials: false
 
@@ -158,7 +160,7 @@ jobs:
       - name: Open sync PR into the failing PR's branch
         if: steps.recheck.outputs.is_drift == 'true'
         env:
-          GH_TOKEN: ${{ secrets.TEMP_PAT_TOKEN || github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           # Route untrusted event data through env instead of interpolating
           # ${{ }} expressions directly into the script: head.ref is the PR
           # author's own branch name and must not be textually substituted
