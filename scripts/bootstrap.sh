@@ -577,27 +577,151 @@ main() {
     fi
 }
 
+
+# ── Volcano welcome banner ───────────────────────────────────────────────────
+# Shaded, gently-erupting ASCII volcano with a top-to-bottom heat gradient.
+# Two art tiers: a Unicode "hero" (█▓▒░ shading) and a 7-bit ASCII fallback
+# (#%+: shading) for terminals without UTF-8. Degrades safely: no color when
+# NO_COLOR is set / not a TTY / TERM=dumb; a single static frame when the
+# terminal can't animate. Never errors. VOLCANO_NO_ANIMATION=1 forces static.
+
+_volcano_setup() {
+    # Color capability.
+    if [ -z "${NO_COLOR:-}" ] && { [ -t 1 ] || [ -n "${VOLCANO_FORCE_COLOR:-}" ]; } && [ "${TERM:-}" != "dumb" ]; then
+        COLOR=1
+    else
+        COLOR=0
+    fi
+
+    # Unicode capability (best-effort; conservative default off unless signalled).
+    UNI=0
+    case "${LC_ALL:-}${LC_CTYPE:-}${LANG:-}" in
+    *[Uu][Tt][Ff]*) UNI=1 ;;
+    esac
+    [ -n "${WT_SESSION:-}" ] && UNI=1
+    case "${TERM_PROGRAM:-}" in
+    vscode | iTerm.app | Apple_Terminal | WezTerm | ghostty | Hyper | tabby) UNI=1 ;;
+    esac
+    [ -n "${VOLCANO_FORCE_UNICODE:-}" ] && UNI=1
+    [ -n "${VOLCANO_FORCE_ASCII:-}" ] && UNI=0
+
+    if [ "$COLOR" = 1 ]; then
+        SMK='\033[38;5;245m'   # ash / smoke
+        WHT='\033[1;38;5;231m' # white-hot crater
+        C1='\033[38;5;220m'    # yellow
+        C2='\033[38;5;214m'    # amber
+        C3='\033[38;5;208m'    # orange
+        C4='\033[38;5;202m'    # orange-red
+        C5='\033[38;5;196m'    # red
+        C6='\033[38;5;160m'    # deep red
+        LO='\033[38;5;124m'    # dim / dormant
+        FLO='\033[38;5;208m'   # base lava flow
+        GRD='\033[38;5;240m'   # ground
+        WRD='\033[1;38;5;214m' # wordmark
+        N='\033[0m'
+    else
+        SMK='' WHT='' C1='' C2='' C3='' C4='' C5='' C6='' LO='' FLO='' GRD='' WRD='' N=''
+    fi
+}
+
+# Emit the four smoke-plume lines for eruption stage $1 (0..3). Always 4 lines so
+# every frame is the same height and an in-place redraw stays aligned.
+_volcano_smoke() {
+    case "$1" in
+    0) s1='' s2='' s3='' s4='' ;;
+    1) s1='' s2='' s3='' s4="                     ${SMK}. ' .${N}" ;;
+    2) s1='' s2="                    ${SMK}'  o  '${N}" s3="                  ${SMK}(  ~~~~~  )${N}" s4="                    ${SMK}~  ~  ~${N}" ;;
+    *) s1="                 ${SMK}.   *   '   .${N}" s2="             ${SMK}'  .    ( o )    .  *${N}" s3="                ${SMK}(  (  ~~~~~  )  )${N}" s4="                  ${SMK}'  ~  ~  ~  '${N}" ;;
+    esac
+    printf '%b\n' "$s1"
+    printf '%b\n' "$s2"
+    printf '%b\n' "$s3"
+    printf '%b\n' "$s4"
+}
+
+# Unicode hero volcano for stage $1.
+_volcano_hero() {
+    _volcano_smoke "$1"
+    case "$1" in
+    0) CR="$LO" BF="$LO" ;;
+    1) CR="$C3" BF="$C6" ;;
+    2) CR="$WHT" BF="$C4" ;;
+    *) CR="$WHT" BF="$FLO" ;;
+    esac
+    printf '%b\n' "                     ${CR}\___/${N}"
+    printf '%b\n' "                    ${C1}╱█▓▓█╲${N}"
+    printf '%b\n' "                   ${C2}╱█▓░░▓█╲${N}"
+    printf '%b\n' "                  ${C3}╱█▓░▒▒░▓█╲${N}"
+    printf '%b\n' "                 ${C4}╱█▓▒▒▒▒▒░▓█╲${N}"
+    printf '%b\n' "                ${C5}╱█▓░▒▒▒▒▒▒░▓█╲${N}"
+    printf '%b\n' "               ${C6}╱█▓▒░▒▒▒▒░▒▒░▓█╲${N}"
+    printf '%b\n' "        ${BF}▂▃▄▅▆▇▟███████████████████▙▇▆▅▄▃▂${N}"
+    printf '%b\n' "       ${GRD}═════════════════════════════════${N}"
+    printf '%b\n' "          ${WRD}V O L C A N O   ·   b u i l d${N}"
+}
+
+# 7-bit ASCII fallback volcano for stage $1 (same cell widths as the hero).
+_volcano_ascii() {
+    _volcano_smoke "$1"
+    case "$1" in
+    0) CR="$LO" BF="$LO" ;;
+    1) CR="$C3" BF="$C6" ;;
+    2) CR="$WHT" BF="$C4" ;;
+    *) CR="$WHT" BF="$FLO" ;;
+    esac
+    printf '%b\n' "                     ${CR}\___/${N}"
+    printf '%b\n' "                    ${C1}/#%%#\\\\${N}"
+    printf '%b\n' "                   ${C2}/#%::%#\\\\${N}"
+    printf '%b\n' "                  ${C3}/#%:++:%#\\\\${N}"
+    printf '%b\n' "                 ${C4}/#%+++++:%#\\\\${N}"
+    printf '%b\n' "                ${C5}/#%:++++++:%#\\\\${N}"
+    printf '%b\n' "               ${C6}/#%+:++++:++:%#\\\\${N}"
+    printf '%b\n' "        ${BF}..:-=+*#################*+=-:..${N}"
+    printf '%b\n' "       =================================${N}"
+    printf '%b\n' "          ${WRD}V O L C A N O   -   b u i l d${N}"
+}
+
+_volcano_frame() {
+    if [ "$UNI" = 1 ]; then _volcano_hero "$1"; else _volcano_ascii "$1"; fi
+}
+
+_volcano_can_animate() {
+    [ "$COLOR" = 1 ] || return 1
+    [ -z "${VOLCANO_NO_ANIMATION:-}" ] || return 1
+    sleep 0.02 2>/dev/null || return 1
+    return 0
+}
+
+_volcano_animate() {
+    height=14
+    printf '\033[?25l'
+    trap 'printf "\033[?25h"' INT TERM
+    first=1
+    for stage in 0 1 2 3; do
+        if [ "$first" -eq 0 ]; then
+            printf '\033[%dA' "$height"
+            printf '\033[0J'
+        fi
+        _volcano_frame "$stage"
+        first=0
+        if [ "$stage" -lt 3 ]; then sleep 0.10; fi
+    done
+    printf '\033[?25h'
+    trap - INT TERM
+}
+
 print_welcome() {
-    R='\033[38;5;196m'
-    O='\033[38;5;208m'
-    Y='\033[38;5;226m'
-    D='\033[38;5;52m'
-    K='\033[38;5;16m'
-    N='\033[0m'
-    printf "%b\n" "       ${K}##${N}        "
-    printf "%b\n" "     ${R}#${O}##${K}##${N}      "
-    printf "%b\n" "    ${R}##${O}####${K}##${N}    "
-    printf "%b\n" "     ${D}##${R}##${K}##${N}${K}      "
-    printf "%b\n" "      ${D}##${R}##${N}${K}      "
-    printf "%b\n" "    ${K}##${R}##${O}##${N}${K}##      "
-    printf "%b\n" "  ${K}##${D}##${R}##${O}##${N}${R}##${K}##    "
-    printf "%b\n" "  ${K}##${D}##${R}##${Y}##${O}##${N}${R}##${K}##  "
-    printf "%b\n" "${K}##${D}##${R}##${O}##${Y}####${O}##${R}##${K}##${N}"
-    printf "%b\n" "${K}####################${N}"
+    _volcano_setup
+    if _volcano_can_animate; then
+        _volcano_animate
+    else
+        _volcano_frame 3
+    fi
     printf '\n'
     printf '  Volcano is set up and ready.\n'
     printf '  What would you like to build?\n'
     printf '\n'
 }
+
 
 main
