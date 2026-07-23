@@ -1,0 +1,8 @@
+{
+  "name": "e2e-agent-eval-tooling",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@volcano.dev/sdk": "^1.3.0"
+  }
+}
