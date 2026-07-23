@@ -46,6 +46,9 @@ collide** — not handled yet, don't parallelize runs on one host.
 ## Prerequisites
 
 - `volcano` CLI on `PATH`, Docker running (`volcano start` needs it).
+- Node.js >= 20 (`@volcano.dev/sdk`, used by `invoke-with-auth.mjs`, declares
+  this as a hard requirement) — `run.sh` checks this in preflight and fails
+  clearly rather than letting `npm install` warn-and-continue on an older version.
 - `claude` CLI (Claude Code) with the `volcano` plugin installed and enabled
   from the `volcano-agentic-plugins` marketplace:
   ```sh

@@ -17,9 +17,18 @@ if (!path) {
 
 const lines = readFileSync(path, 'utf8').split('\n').filter((l) => l.trim() !== '');
 
+// Known-but-unhandled `type`/block-`type` values are tracked separately from
+// unparsed_lines (which is only invalid JSON): a CLI schema change usually
+// still produces valid JSON, just with a shape these branches don't expect,
+// which would otherwise be silently ignored rather than surfaced anywhere.
+const KNOWN_EVENT_TYPES = new Set(['assistant', 'user', 'result', 'system']);
+const KNOWN_BLOCK_TYPES = new Set(['text', 'tool_use', 'tool_result']);
+
 const metrics = {
   total_lines: lines.length,
   unparsed_lines: 0,
+  unrecognized_event_types: {},
+  unrecognized_content_block_types: {},
   tool_calls: 0,
   tool_calls_by_name: {},
   help_invocations: 0,
@@ -47,8 +56,17 @@ for (const line of lines) {
     continue;
   }
 
+  if (!KNOWN_EVENT_TYPES.has(evt.type)) {
+    const key = String(evt.type);
+    metrics.unrecognized_event_types[key] = (metrics.unrecognized_event_types[key] ?? 0) + 1;
+  }
+
   if (evt.type === 'assistant' && evt.message?.content) {
     for (const block of evt.message.content) {
+      if (block && !KNOWN_BLOCK_TYPES.has(block.type)) {
+        const key = String(block.type);
+        metrics.unrecognized_content_block_types[key] = (metrics.unrecognized_content_block_types[key] ?? 0) + 1;
+      }
       if (block?.type !== 'tool_use') continue;
       metrics.tool_calls++;
       const name = block.name ?? 'unknown';
@@ -76,6 +94,10 @@ for (const line of lines) {
 
   if (evt.type === 'user' && evt.message?.content) {
     for (const block of evt.message.content) {
+      if (block && !KNOWN_BLOCK_TYPES.has(block.type)) {
+        const key = String(block.type);
+        metrics.unrecognized_content_block_types[key] = (metrics.unrecognized_content_block_types[key] ?? 0) + 1;
+      }
       if (block?.type !== 'tool_result') continue;
       if (block.is_error === true) {
         metrics.failed_tool_calls++;

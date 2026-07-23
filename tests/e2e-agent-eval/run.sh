@@ -18,8 +18,16 @@ log "preflight checks"
 for bin in volcano claude docker node; do
   command -v "$bin" >/dev/null 2>&1 || { fail "$bin not found on PATH"; exit 1; }
 done
+# @volcano.dev/sdk declares engines.node >=20 (used by invoke-with-auth.mjs) —
+# fail preflight with a clear message rather than a confusing runtime error
+# from `npm install` (which may only warn) or the verifier itself later.
+NODE_MAJOR=$(node -e 'process.stdout.write(String(process.versions.node.split(".")[0]))')
+if [ "$NODE_MAJOR" -lt 20 ]; then
+  fail "node >=20 required (found $(node --version)) — @volcano.dev/sdk (invoke-with-auth.mjs) requires it"
+  exit 1
+fi
 docker info >/dev/null 2>&1 || { fail "docker is not running"; exit 1; }
-if ! claude plugin list 2>/dev/null | grep -q '^  ❯ volcano@volcano-agentic-plugins'; then
+if ! claude plugin list 2>/dev/null | grep -q 'volcano@volcano-agentic-plugins'; then
   fail "volcano@volcano-agentic-plugins plugin not installed/enabled — run: claude plugin marketplace update volcano-agentic-plugins"
   exit 1
 fi
@@ -39,7 +47,11 @@ fi
 log "resetting shared local Volcano dev state for isolation"
 volcano start >/dev/null 2>&1 || { fail "could not start local stack for reset"; exit 1; }
 volcano reset --yes >/dev/null 2>&1 || { fail "volcano reset failed"; exit 1; }
-volcano stop >/dev/null 2>&1 || true
+# Must not silently continue on failure here: if this stop fails and the
+# stack stays running, the agent could observe an already-running stack and
+# skip `volcano start` itself, corrupting the "did it start the stack
+# unprompted" signal this scenario is specifically checking (see scenario.md).
+volcano stop >/dev/null 2>&1 || { fail "could not stop local stack before handing off to the agent"; exit 1; }
 
 SANDBOX_DIR="$(mktemp -d -t volcano-e2e-eval-XXXXXX)"
 mkdir -p "$RESULTS_DIR"
@@ -47,9 +59,14 @@ log "sandbox: $SANDBOX_DIR"
 log "results: $RESULTS_DIR"
 
 cleanup() {
-  if [ -d "$SANDBOX_DIR/volcano" ]; then
-    (cd "$SANDBOX_DIR" && volcano stop >/dev/null 2>&1) || true
-  fi
+  # Unconditional and best-effort: the stack is a machine-wide singleton, not
+  # scoped to $SANDBOX_DIR, so whether the agent scaffolded `volcano/` at the
+  # sandbox's top level (it might nest it in a subdirectory instead) has no
+  # bearing on whether Docker containers are actually running that need
+  # stopping. Gating this on `-d "$SANDBOX_DIR/volcano"` previously meant a
+  # run where the agent called `volcano start` but hadn't (yet) scaffolded —
+  # or scaffolded elsewhere — leaked the stack running after the harness exited.
+  (cd "$SANDBOX_DIR" 2>/dev/null && volcano stop >/dev/null 2>&1) || true
   if [ -z "${CLAUDE_EVAL_KEEP_SANDBOX:-}" ]; then
     rm -rf "$SANDBOX_DIR"
   else
@@ -93,14 +110,18 @@ if [ -d "$SANDBOX_DIR/volcano" ]; then
   LOCAL_UP=$(echo "$STATUS_OUT" | grep -qi "running" && echo true || echo false)
 
   FUNCTIONS_OUT="$(cd "$SANDBOX_DIR" && volcano functions list 2>&1)"
-  FN_NAMES=$(echo "$FUNCTIONS_OUT" | awk '
-    /^-+$/ { next }
-    /^Name[[:space:]]/ { next }
-    /^No functions/ { next }
-    /^Showing/ { next }
-    NF==0 { next }
-    { print $1 }
-  ')
+
+  # Discover names from the scaffold on disk, not `volcano functions list`'s
+  # human-readable table: that table truncates names over ~20 chars with
+  # `...` (confirmed against the live CLI), which would extract a truncated,
+  # unresolvable name and wrongly fail a correctly-deployed function with a
+  # long name. `volcano/functions/` entries map 1:1 to function names per
+  # the platform skill's own scanner rules (one file or one directory per
+  # function; `_`-prefixed entries are shared code, not functions).
+  FN_NAMES=""
+  if [ -d "$SANDBOX_DIR/volcano/functions" ]; then
+    FN_NAMES=$(find "$SANDBOX_DIR/volcano/functions" -mindepth 1 -maxdepth 1 -not -name '_*' -exec basename {} \; | sed 's/\.[^.]*$//' | sort -u)
+  fi
 
   # `volcano functions invoke` (CLI) has no way to supply a bearer token, and
   # a correctly-built function requires __volcano_auth and 401s without one
@@ -146,11 +167,26 @@ node "$SCRIPT_DIR/analyze-transcript.mjs" "$RESULTS_DIR/transcript.jsonl" >"$RES
 PASS="false"
 if node -e '
   const v = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
-  const ok = (v.invocations || []).some((i) => !i.error && i.status && i.status >= 200 && i.status < 300);
+  // Per scenario.md: "2xx, parseable JSON body" — a 2xx status with a
+  // non-JSON string body (the SDK returns raw strings for non-JSON
+  // responses) must not count as a pass.
+  const isParseableJson = (data) => {
+    if (data !== null && typeof data === "object") return true;
+    if (typeof data !== "string") return false;
+    try { JSON.parse(data); return true; } catch { return false; }
+  };
+  const ok = (v.invocations || []).some((i) =>
+    !i.error && i.status >= 200 && i.status < 300 && isParseableJson(i.data)
+  );
   process.exit(ok ? 0 : 1);
 ' "$VERIFY_JSON"; then
   PASS="true"
 fi
+
+AUTH_ERROR_NOTE=$(node -e '
+  const v = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+  if (v.auth_error) process.stdout.write(v.auth_error);
+' "$VERIFY_JSON" 2>/dev/null || true)
 
 {
   echo "# Result: todo-api-functions-local ($RUN_ID)"
@@ -158,6 +194,10 @@ fi
   echo "**Pass:** $PASS  (at least one deployed function invoked successfully, authenticated)"
   echo "**Agent exit code:** $AGENT_EXIT"
   echo "**Agent wall time:** $((AGENT_END - AGENT_START))s"
+  if [ -n "$AUTH_ERROR_NOTE" ]; then
+    echo
+    echo "**Note:** a non-pass here may be a harness verification problem, not a build failure — auth_error: $AUTH_ERROR_NOTE"
+  fi
   echo
   echo "See \`metrics.json\` for friction signals and \`verification.json\` for the independent invoke results."
 } >"$RESULTS_DIR/report.md"

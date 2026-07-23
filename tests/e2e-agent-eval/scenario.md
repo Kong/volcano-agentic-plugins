@@ -53,8 +53,11 @@ finding from the same investigation).
 ## Pass condition
 
 At least one function deployed under `volcano/functions/` responds
-successfully (2xx, parseable JSON body) to an independent `volcano functions
-invoke <name>` call made by the harness *after* the agent session ends. This
+successfully (2xx, parseable JSON body) to an independent, **authenticated**
+invocation (`invoke-with-auth.mjs`, via a real SDK session — not `volcano
+functions invoke`, which has no way to supply a bearer token and would 401 a
+correctly-secured function) made by the harness *after* the agent session
+ends. This
 is the bar for this first cut of the scenario — see `README.md` for what's
 explicitly not graded yet (DB/migration correctness, RLS, frontend, cloud).
 
@@ -65,7 +68,7 @@ explicitly not graded yet (DB/migration correctness, RLS, frontend, cloud).
 | `--help` invocation count | `analyze-transcript.mjs` scans Bash tool calls |
 | Failed command count | `analyze-transcript.mjs` scans tool results for non-zero exit |
 | Same-file rewrite count | `analyze-transcript.mjs` counts repeated Write/Edit on one path |
-| Turns/tool-calls to each milestone | `analyze-transcript.mjs` (best-effort; see its `unparsed_lines` caveat) |
+| Aggregate tool-call/turn counts (not per-milestone — `analyze-transcript.mjs` doesn't identify which milestone a tool call belongs to) | `analyze-transcript.mjs`'s `tool_calls`/`num_turns` (best-effort; see its `unparsed_lines`/`unrecognized_event_types` caveats) |
 | Did it skip `volcano init`? | inferred from transcript + final file tree |
 | Did it auto-deploy locally without being asked? | inferred from transcript (matches `AGENTS.md`'s default) |
 | Did it attempt `volcano cloud ...` unprompted? | should not happen in this scenario; flagged as a violation if seen |
