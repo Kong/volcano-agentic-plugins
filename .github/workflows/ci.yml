@@ -81,7 +81,10 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           submodules: recursive
-          fetch-depth: 0
+          # check:skill-submodules reads the committed pin + submodule worktree
+          # only, so shallow is fine. The elevated token isn't needed in git
+          # config (gh calls auth via GH_TOKEN env), so don't persist it.
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
@@ -92,11 +95,8 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
-          cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
+      # No pnpm install: check:skill-submodules only uses git + node builtins.
       - name: Recheck skills sync
         id: skills
         continue-on-error: true
@@ -115,7 +115,7 @@ jobs:
           fi
 
           gh label create "needs-skills-sync" --color "FBCA04" \
-            --description "Blocked on an automated volcano-skills submodule sync" --force
+            --description "Blocked on an automated volcano-skills submodule sync PR" --force
           gh pr edit "$pr_number" --add-label "needs-skills-sync"
 
           # Merged PRs can't be reopened via the API; this only succeeds if the
