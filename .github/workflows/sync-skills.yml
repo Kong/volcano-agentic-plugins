@@ -99,7 +99,13 @@ jobs:
           fi
 
           branch="chore/sync-volcano-skills"
-          title="chore: sync volcano-skills submodule to ${{ steps.bump.outputs.short }}"
+          # fix(skills), not chore: — this lands directly on main, and Release
+          # Please does not cut a release (or bump any version) for chore-only
+          # history by default. Skill-content syncs are the most frequent kind
+          # of change this repo ships and must be release-triggering, or the
+          # whole point of wiring up Release Please (making version bumps
+          # actually reflect content changes) silently fails for its main case.
+          title="fix(skills): sync volcano-skills submodule to ${{ steps.bump.outputs.short }}"
           body="$(cat <<'EOF'
           Automated sync of the `sources/volcano-skills` submodule to the volcano-skills default-branch HEAD, with the materialized per-plugin skills regenerated via `pnpm sync:skills`.
 
