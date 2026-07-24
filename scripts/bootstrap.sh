@@ -115,6 +115,30 @@ valid_markdown_download() {
 BEGIN_MARKER="# >>> VOLCANO MANAGED BLOCK (do not edit) >>>"
 END_MARKER="# <<< VOLCANO MANAGED BLOCK <<<"
 
+# Emit $file to stdout with a *complete* managed block (begin + matching end)
+# removed, and trailing blank lines trimmed. Shared by upsert_block and
+# remove_block. Safety: if a begin marker has no matching end marker (a
+# partial write or a hand-edited file), the block is NOT a well-formed block,
+# so everything from the begin marker onward is emitted unchanged rather than
+# silently dropped — preserving user content instead of eating it.
+strip_managed_block() {
+    awk -v b="$BEGIN_MARKER" -v e="$END_MARKER" '
+    $0==b && !inblk { inblk=1; n=0; next }
+    inblk {
+      if ($0==e) { inblk=0; next }   # complete block: drop begin..end inclusive
+      buf[++n]=$0                      # buffer candidate block body meanwhile
+      next
+    }
+    { print }
+    END {
+      if (inblk) {                     # begin with no end: not a real block, restore verbatim
+        print b
+        for (i=1;i<=n;i++) print buf[i]
+      }
+    }
+  ' "$1" | awk 'NF{last=NR} {line[NR]=$0} END{for(i=1;i<=last;i++) print line[i]}'
+}
+
 upsert_block() {
     file="$1"
     body="$2"
@@ -128,11 +152,7 @@ upsert_block() {
     fi
 
     tmp="$(mktemp)"
-    awk -v b="$BEGIN_MARKER" -v e="$END_MARKER" '
-    $0==b {inblk=1; next}
-    $0==e {inblk=0; next}
-    !inblk {print}
-  ' "$file" | awk 'NF{last=NR} {line[NR]=$0} END{for(i=1;i<=last;i++) print line[i]}' >"$tmp"
+    strip_managed_block "$file" >"$tmp"
     mv "$tmp" "$file"
 
     [ -s "$file" ] && printf '\n' >>"$file"
@@ -150,11 +170,7 @@ remove_block() {
     [ -f "$file" ] || return 0
     grep -qF "$BEGIN_MARKER" "$file" 2>/dev/null || return 0
     tmp="$(mktemp)"
-    awk -v b="$BEGIN_MARKER" -v e="$END_MARKER" '
-    $0==b {inblk=1; next}
-    $0==e {inblk=0; next}
-    !inblk {print}
-  ' "$file" | awk 'NF{last=NR} {line[NR]=$0} END{for(i=1;i<=last;i++) print line[i]}' >"$tmp"
+    strip_managed_block "$file" >"$tmp"
     mv "$tmp" "$file"
     log "removed stale managed block in $file (Volcano plugin present — plugin is the source of truth)"
 }
@@ -408,9 +424,30 @@ agent_plugin_root() {
 }
 
 agent_has_volcano_plugin() {
-    root="$(agent_plugin_root "$1")"
+    agent="$1"
+
+    # Prefer the agent's authoritative installed-plugins record over scanning
+    # for plugin-shaped files: the marketplace clone (e.g.
+    # ~/.claude/plugins/marketplaces/.../plugins/*/skills/AGENTS.md) carries
+    # the same files even when nothing is installed, so a bare file scan
+    # false-positives on "marketplace added but plugin not installed" and
+    # would strip a still-needed fallback. Claude Code records actual installs
+    # in installed_plugins.json keyed by "<plugin>@<marketplace>".
+    if [ "$agent" = "claude" ]; then
+        record="$HOME/.claude/plugins/installed_plugins.json"
+        [ -f "$record" ] && grep -q '"volcano@volcano-agentic-plugins"' "$record"
+        return
+    fi
+
+    # Codex/Cursor have no install-record format documented here to read, so
+    # fall back to a directory scan — but exclude the marketplace clone and
+    # raw git repos (which contain skills/AGENTS.md without an install) to
+    # avoid the same false positive. This errs toward keeping the fallback
+    # (a slightly stale fallback is a lesser evil than no guidance at all).
+    root="$(agent_plugin_root "$agent")"
     [ -n "$root" ] && [ -d "$root" ] || return 1
-    found="$(find "$root" -maxdepth 7 -type f -path '*/skills/AGENTS.md' 2>/dev/null | while IFS= read -r file; do
+    found="$(find "$root" -maxdepth 7 -type f -path '*/skills/AGENTS.md' \
+        ! -path '*/marketplaces/*' ! -path '*/repos/*' 2>/dev/null | while IFS= read -r file; do
         dir="$(dirname "$file")"
         if is_plugin_skills_dir "$dir"; then
             printf 'y'
@@ -510,19 +547,35 @@ link_skills() {
     log "linked skills into $skills_dir"
 }
 
-# Plugin-first cleanup counterpart to link_skills: remove only the symlinks a
-# prior no-plugin run created (those resolving into $VOLCANO_HOME/skills), so
-# they don't double-register alongside the plugin's own skills. Never touches
-# real files or symlinks pointing elsewhere — only our own.
+# Plugin-first cleanup counterpart to link_skills: remove only the skill
+# symlinks a prior no-plugin run created, so they don't double-register
+# alongside the plugin's own skills. link_skills sources from
+# VOLCANO_RESOLVED_SKILLS_DIR, which install_canonical sets to EITHER
+# $VOLCANO_HOME/skills OR a plugin skills dir (whenever find_plugin_skills_dir
+# succeeded on that prior run) — so a stale symlink may resolve into either.
+# Match both: a target under $VOLCANO_HOME/skills, or one whose parent dir is
+# itself a Volcano plugin skills dir (has our marker files). Never touches
+# real files or unrelated symlinks — only our own.
 unlink_volcano_skills() {
     skills_dir="$1"
     [ -d "$skills_dir" ] || return 0
     for dest in "$skills_dir"/*; do
         [ -L "$dest" ] || continue
         target="$(readlink "$dest" 2>/dev/null || true)"
+        [ -n "$target" ] || continue
         case "$target" in
-        "$VOLCANO_HOME/skills/"* | "$VOLCANO_HOME/skills") rm -f "$dest" && log "  unlinked stale skill symlink $dest" ;;
+        "$VOLCANO_HOME/skills/"* | "$VOLCANO_HOME/skills")
+            rm -f "$dest" && log "  unlinked stale skill symlink $dest"
+            continue
+            ;;
         esac
+        # Or: the target is a per-skill dir living directly under a Volcano
+        # plugin skills dir (e.g. a prior run linked ~/.claude/skills/* into a
+        # plugin cache dir, possibly another agent's). dirname handles a
+        # trailing slash from link_skills' "$src_root"/*/ glob.
+        if is_plugin_skills_dir "$(dirname "$target")"; then
+            rm -f "$dest" && log "  unlinked stale skill symlink $dest (into plugin skills dir)"
+        fi
     done
 }
 
@@ -563,15 +616,19 @@ wire_claude() {
 }
 
 wire_codex() {
-    if [ -f "$HOME/.codex/AGENTS.override.md" ]; then
-        warn "codex: ~/.codex/AGENTS.override.md exists and takes precedence over AGENTS.md;"
-        warn "       Volcano instructions may be ignored until you remove or update it."
-    fi
+    # Plugin-first check goes first: when the plugin is the source of truth we
+    # never rely on ~/.codex/AGENTS.md, so the AGENTS.override.md precedence
+    # warning below would be misleading (it could prompt the user to needlessly
+    # edit or delete their own override file).
     if agent_has_volcano_plugin codex; then
         log "codex: Volcano plugin detected — plugin is the source of truth; not wiring ~/.volcano fallback"
         remove_block "$HOME/.codex/AGENTS.md"
         unlink_volcano_skills "$HOME/.codex/skills"
         return 0
+    fi
+    if [ -f "$HOME/.codex/AGENTS.override.md" ]; then
+        warn "codex: ~/.codex/AGENTS.override.md exists and takes precedence over AGENTS.md;"
+        warn "       Volcano instructions may be ignored until you remove or update it."
     fi
     upsert_block "$HOME/.codex/AGENTS.md" "$POINTER_TEXT"
     link_skills "$HOME/.codex/skills"
