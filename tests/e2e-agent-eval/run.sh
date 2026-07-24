@@ -7,6 +7,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="$(cd "$SCRIPT_DIR/../../plugins/claude-code" && pwd)"
+[ -n "$PLUGIN_DIR" ] || { printf '[e2e-agent-eval] FAIL: %s\n' "could not resolve plugins/claude-code relative to $SCRIPT_DIR" >&2; exit 1; }
 PROMPT="${CLAUDE_EVAL_PROMPT:-Build a todo app using volcano.}"  # bare and product-named, per scenario.md's Prompt section
 MODEL="${CLAUDE_EVAL_MODEL:-sonnet}"
 TIMEOUT_SECS="${CLAUDE_EVAL_TIMEOUT_SECS:-600}"  # a simple todo app build/deploy/verify should not need longer than this
