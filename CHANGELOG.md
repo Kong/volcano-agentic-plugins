@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.8](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.7...v0.2.8) (2026-07-24)
+
+
+### Bug Fixes
+
+* **skills:** sync volcano-skills submodule to 8028b0f ([#53](https://github.com/Kong/volcano-agentic-plugins/issues/53)) ([e5531e4](https://github.com/Kong/volcano-agentic-plugins/commit/e5531e4a4baf53671391180a0ed3d28fc609ba9d))
+
 ## [0.2.7](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.6...v0.2.7) (2026-07-24)
 
 
