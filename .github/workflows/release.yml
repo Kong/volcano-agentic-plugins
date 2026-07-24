@@ -39,6 +39,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Validate
+        # Skip only the upstream-freshness comparison in check:skill-submodules:
+        # this job builds from an immutable tag, so a pin that upstream has since
+        # outrun must not fail the release (CI on PRs/main still enforces it).
+        env:
+          SKILL_SUBMODULE_SKIP_UPSTREAM: "1"
         run: |
           pnpm check:skill-submodules
           pnpm check:skill-drift
