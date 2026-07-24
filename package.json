@@ -1,6 +1,6 @@
 {
   "name": "volcano-agentic-plugins",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
   "description": "Monorepo for Volcano plugins/extensions across agentic IDEs. Thin shells over the Volcano CLI with materialized canonical skills drift-checked against the volcano-skills source submodule.",
