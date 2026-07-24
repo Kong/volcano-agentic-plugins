@@ -39,6 +39,14 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Validate
+        # Skip the upstream-freshness comparison in check:skill-submodules only
+        # when the checked-out ref is an immutable tag (the push: tags trigger,
+        # or a tag selected for workflow_dispatch): the pin is frozen, so a
+        # moving upstream must not fail the release. A workflow_dispatch from a
+        # branch checks out mutable content, so freshness stays enforced there
+        # (as it is on PRs/main). All recorded-pin checks always run.
+        env:
+          SKILL_SUBMODULE_SKIP_UPSTREAM: ${{ startsWith(github.ref, 'refs/tags/') && '1' || '0' }}
         run: |
           pnpm check:skill-submodules
           pnpm check:skill-drift

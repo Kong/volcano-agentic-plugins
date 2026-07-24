@@ -72,9 +72,18 @@ try {
   if (mode !== "160000") {
     errors.push(`${SOURCE_PATH} must be a git submodule (mode ${mode || "missing"})`);
   } else {
-    const latest = remoteHead(CANONICAL_URL);
-    if (pinned !== latest) {
-      errors.push(`${SOURCE_PATH} is pinned to ${pinned}, but ${CANONICAL_URL} HEAD is ${latest}`);
+    // The upstream-freshness comparison is a moving target: it fails whenever
+    // Kong/volcano-skills advances past the pin. That is the right gate on
+    // PRs/main (kept green by sync-skills.yml), but wrong on a release built
+    // from an immutable tag — the tag froze a pin that upstream will outrun,
+    // making releases non-deterministic and old tags impossible to rebuild.
+    // SKILL_SUBMODULE_SKIP_UPSTREAM=1 (set only by release.yml) skips it; all
+    // recorded-pin checks below still run.
+    if (process.env.SKILL_SUBMODULE_SKIP_UPSTREAM !== "1") {
+      const latest = remoteHead(CANONICAL_URL);
+      if (pinned !== latest) {
+        errors.push(`${SOURCE_PATH} is pinned to ${pinned}, but ${CANONICAL_URL} HEAD is ${latest}`);
+      }
     }
 
     try {
@@ -110,5 +119,6 @@ if (errors.length > 0) {
 }
 
 const [, pinned] = gitStage(SOURCE_PATH).split(/\s+/);
-console.log(`${SOURCE_PATH} -> ${pinned} (latest)`);
+const freshness = process.env.SKILL_SUBMODULE_SKIP_UPSTREAM === "1" ? "upstream check skipped" : "latest";
+console.log(`${SOURCE_PATH} -> ${pinned} (${freshness})`);
 console.log("Plugin skills are materialized as tracked files for shallow-clone marketplaces.");
