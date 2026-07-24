@@ -236,7 +236,7 @@ jobs:
           title="chore: sync volcano-skills submodule into #${pr_number}"
           body="Automated sync of \`sources/volcano-skills\` to \`${SYNC_SHORT_SHA}\`, unblocking #${pr_number} whose \`check:skill-submodules\` check is failing because its pin is behind the canonical repo's HEAD.
 
-          Auto-merged into \`${feature_branch}\` to unblock CI on #${pr_number}."
+          Merges into \`${feature_branch}\` automatically to unblock CI on #${pr_number}."
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
