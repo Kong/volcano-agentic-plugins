@@ -6,6 +6,12 @@
 # the Volcano plugin for your IDE: same end state (CLI + AGENTS.md + skills + agent
 # wiring), achieved without a plugin marketplace.
 #
+# Plugin-first: if an agent already has the Volcano plugin installed, the plugin is
+# the source of truth (its skills carry the guidance, loaded on demand), so this
+# script does NOT wire a ~/.volcano/AGENTS.md fallback for that agent and removes any
+# managed block a prior no-plugin run left behind — avoiding a second, independently
+# stale always-on copy. The CLI install/upgrade still runs regardless.
+#
 #   curl -fsSL https://raw.githubusercontent.com/Kong/volcano-agentic-plugins/main/scripts/bootstrap.sh | sh
 #
 # Runs immediately — there is no plan/dry-run mode. Review this script before
@@ -132,6 +138,25 @@ upsert_block() {
     [ -s "$file" ] && printf '\n' >>"$file"
     printf '%s\n%s\n%s\n' "$BEGIN_MARKER" "$body" "$END_MARKER" >>"$file"
     log "$action managed block in $file"
+}
+
+# Strip the managed block from a file if present, leaving all other content
+# intact. Used in the plugin-first path: when the Volcano plugin is installed
+# for an agent, the plugin is the source of truth, so any managed block left
+# by a prior no-plugin run of this script must go (otherwise it keeps a
+# second, independently-stale AGENTS.md injected alongside the plugin).
+remove_block() {
+    file="$1"
+    [ -f "$file" ] || return 0
+    grep -qF "$BEGIN_MARKER" "$file" 2>/dev/null || return 0
+    tmp="$(mktemp)"
+    awk -v b="$BEGIN_MARKER" -v e="$END_MARKER" '
+    $0==b {inblk=1; next}
+    $0==e {inblk=0; next}
+    !inblk {print}
+  ' "$file" | awk 'NF{last=NR} {line[NR]=$0} END{for(i=1;i<=last;i++) print line[i]}' >"$tmp"
+    mv "$tmp" "$file"
+    log "removed stale managed block in $file (Volcano plugin present — plugin is the source of truth)"
 }
 
 # ---------------------------------------------------------------------------
@@ -369,6 +394,32 @@ find_plugin_skills_dir() {
     return 1
 }
 
+# Per-agent plugin detection for the plugin-first wiring path. Unlike
+# find_plugin_skills_dir (which answers "is a plugin skills dir reachable from
+# anywhere", used to source canonical content), this answers the narrower
+# "does THIS agent have the Volcano plugin installed" — so a machine with the
+# Claude Code plugin but a bare Codex still wires Codex's no-plugin fallback.
+agent_plugin_root() {
+    case "$1" in
+    claude) printf '%s' "$HOME/.claude/plugins" ;;
+    codex) printf '%s' "$HOME/.codex/plugins" ;;
+    cursor) printf '%s' "$HOME/.cursor" ;;
+    esac
+}
+
+agent_has_volcano_plugin() {
+    root="$(agent_plugin_root "$1")"
+    [ -n "$root" ] && [ -d "$root" ] || return 1
+    found="$(find "$root" -maxdepth 7 -type f -path '*/skills/AGENTS.md' 2>/dev/null | while IFS= read -r file; do
+        dir="$(dirname "$file")"
+        if is_plugin_skills_dir "$dir"; then
+            printf 'y'
+            break
+        fi
+    done)"
+    [ -n "$found" ]
+}
+
 install_manual_skills() {
     mkdir -p "$VOLCANO_HOME/skills"
     manifest="$(mktemp)"
@@ -459,6 +510,22 @@ link_skills() {
     log "linked skills into $skills_dir"
 }
 
+# Plugin-first cleanup counterpart to link_skills: remove only the symlinks a
+# prior no-plugin run created (those resolving into $VOLCANO_HOME/skills), so
+# they don't double-register alongside the plugin's own skills. Never touches
+# real files or symlinks pointing elsewhere — only our own.
+unlink_volcano_skills() {
+    skills_dir="$1"
+    [ -d "$skills_dir" ] || return 0
+    for dest in "$skills_dir"/*; do
+        [ -L "$dest" ] || continue
+        target="$(readlink "$dest" 2>/dev/null || true)"
+        case "$target" in
+        "$VOLCANO_HOME/skills/"* | "$VOLCANO_HOME/skills") rm -f "$dest" && log "  unlinked stale skill symlink $dest" ;;
+        esac
+    done
+}
+
 # ---------------------------------------------------------------------------
 # Per-agent wiring.
 # ---------------------------------------------------------------------------
@@ -477,6 +544,18 @@ EOF
 )
 
 wire_claude() {
+    # Plugin-first: if the Claude Code plugin is installed, it is the source
+    # of truth (its skills carry the guidance; Claude Code loads them
+    # on-demand). Wiring a ~/.volcano/AGENTS.md @-import here would just add a
+    # second, independently-stale always-on copy that drifts once the plugin
+    # updates and ~/.volcano does not. So don't wire it — and strip any block
+    # a prior no-plugin run left behind.
+    if agent_has_volcano_plugin claude; then
+        log "claude: Volcano plugin detected — plugin is the source of truth; not wiring ~/.volcano fallback"
+        remove_block "$HOME/.claude/CLAUDE.md"
+        unlink_volcano_skills "$HOME/.claude/skills"
+        return 0
+    fi
     upsert_block "$HOME/.claude/CLAUDE.md" "$POINTER_TEXT
 
 @$VOLCANO_HOME_LABEL/AGENTS.md"
@@ -487,6 +566,12 @@ wire_codex() {
     if [ -f "$HOME/.codex/AGENTS.override.md" ]; then
         warn "codex: ~/.codex/AGENTS.override.md exists and takes precedence over AGENTS.md;"
         warn "       Volcano instructions may be ignored until you remove or update it."
+    fi
+    if agent_has_volcano_plugin codex; then
+        log "codex: Volcano plugin detected — plugin is the source of truth; not wiring ~/.volcano fallback"
+        remove_block "$HOME/.codex/AGENTS.md"
+        unlink_volcano_skills "$HOME/.codex/skills"
+        return 0
     fi
     upsert_block "$HOME/.codex/AGENTS.md" "$POINTER_TEXT"
     link_skills "$HOME/.codex/skills"
@@ -499,6 +584,10 @@ wire_codex() {
 # a project directory, print the exact rule content and let the user paste it
 # where it belongs.
 prompt_cursor() {
+    if agent_has_volcano_plugin cursor; then
+        log "cursor: Volcano plugin detected — plugin is the source of truth; no manual rule needed"
+        return 0
+    fi
     rule_body=$(cat <<EOF
 ---
 description: Volcano usage rules
