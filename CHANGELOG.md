@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0](https://github.com/Kong/volcano-agentic-plugins/compare/v0.1.0...v0.2.0) (2026-07-24)
+
+
+### Features
+
+* **ci:** auto-merge skill-sync PRs instead of asking a maintainer to merge ([#33](https://github.com/Kong/volcano-agentic-plugins/issues/33)) ([dd9015c](https://github.com/Kong/volcano-agentic-plugins/commit/dd9015cce6086e2666a9958b4f82027452f2faee))
+
+
+### Bug Fixes
+
+* **bootstrap:** plugin-first wiring, no stale ~/.volcano fallback alongside a plugin ([#34](https://github.com/Kong/volcano-agentic-plugins/issues/34)) ([3ce5a03](https://github.com/Kong/volcano-agentic-plugins/commit/3ce5a03bff25fe84c8f4dd0ceba938abac9b5081))
+* **e2e-agent-eval:** load plugin via --plugin-dir, exclude user settings scope ([#35](https://github.com/Kong/volcano-agentic-plugins/issues/35)) ([2f80335](https://github.com/Kong/volcano-agentic-plugins/commit/2f8033589cd4ace5e953ad6094e351c9038f40d7))
+* **skills:** sync volcano-skills submodule to 2891dcd ([#31](https://github.com/Kong/volcano-agentic-plugins/issues/31)) ([add72dd](https://github.com/Kong/volcano-agentic-plugins/commit/add72dd621808adfaa0480e165327c128ca53df9))
+
 ## [0.1.0](https://github.com/Kong/volcano-agentic-plugins/compare/v0.0.4...v0.1.0) (2026-07-24)
 
 
