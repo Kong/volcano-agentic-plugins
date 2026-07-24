@@ -4,8 +4,9 @@
 
 - Fresh scratch directory — no pre-existing `volcano/` scaffold.
 - `volcano` CLI on `PATH`, Docker available.
-- Claude Code `volcano` plugin installed and enabled (latest — see README
-  prerequisites).
+- Claude Code CLI on `PATH` and authenticated — the `volcano` plugin is
+  loaded straight from this repo's working tree (`--plugin-dir`), not from a
+  marketplace install (see README prerequisites for why).
 - No `volcano login`/auth required or expected; this scenario never touches
   `volcano cloud ...`.
 - Local Volcano dev state reset (`volcano reset --yes`) immediately before
@@ -18,9 +19,8 @@
 Build a todo app using volcano.
 ```
 
-Kept identical to the `.auto/measure.sh` autoresearch experiment's fixed
-prompt for comparability. Still bare on everything else (no mention of local vs. cloud, no mention of
-deploying, no mention of testing) but now names "volcano" explicitly. This
+Bare on everything else (no mention of local vs. cloud, no mention of
+deploying, no mention of testing) but names "volcano" explicitly. This
 changed from the original bare `AGENTS.md`-example prompt ("Build me a todo
 API", no product name) after a live run showed the agent has no reliable way
 to discover Volcano is relevant without an explicit mention: `AGENTS.md`
@@ -58,9 +58,17 @@ successfully (2xx, parseable JSON body) to an independent, **authenticated**
 invocation (`invoke-with-auth.mjs`, via a real SDK session — not `volcano
 functions invoke`, which has no way to supply a bearer token and would 401 a
 correctly-secured function) made by the harness *after* the agent session
-ends. This
-is the bar for this first cut of the scenario — see `README.md` for what's
-explicitly not graded yet (DB/migration correctness, RLS, frontend, cloud).
+ends. This is the bar for this first cut of the scenario — see `README.md`
+for what's explicitly not graded yet (DB/migration correctness, RLS,
+frontend, cloud).
+
+**Known gap in this rubric, not yet observed:** the prompt says "app," not
+"API," and a legitimate Volcano todo app could be pure client-side
+query-builder + RLS CRUD with no Function at all (a real, skill-endorsed
+architecture for simple per-user data, per `volcano_sdk`'s own router
+guidance). That would fail this pass gate despite being a correct build.
+Every real run so far has gone the Function route regardless, but this gate
+doesn't verify that path is actually the one being exercised.
 
 ## Rubric (recorded, not all blocking for pass/fail)
 

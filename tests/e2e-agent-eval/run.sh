@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # Runs the todo-api-functions-local scenario (see scenario.md): a bare "build
-# me a todo API" prompt against Claude Code + the volcano plugin, in a fresh
-# scratch directory, local mode only. See README.md for env vars and output.
+# a todo app using volcano" prompt against Claude Code + the volcano plugin,
+# in a fresh scratch directory, local mode only. See README.md for env vars
+# and output.
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="$(cd "$SCRIPT_DIR/../../plugins/claude-code" && pwd)"
-PROMPT="${CLAUDE_EVAL_PROMPT:-Build a todo app using volcano.}"  # kept identical to .auto/measure.sh's fixed prompt for comparability
+PROMPT="${CLAUDE_EVAL_PROMPT:-Build a todo app using volcano.}"  # bare and product-named, per scenario.md's Prompt section
 MODEL="${CLAUDE_EVAL_MODEL:-sonnet}"
-TIMEOUT_SECS="${CLAUDE_EVAL_TIMEOUT_SECS:-600}"  # a simple todo API build/deploy/verify should not need longer than this
+TIMEOUT_SECS="${CLAUDE_EVAL_TIMEOUT_SECS:-600}"  # a simple todo app build/deploy/verify should not need longer than this
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"
 RESULTS_DIR="$SCRIPT_DIR/results/$RUN_ID"
 
@@ -28,7 +29,25 @@ if [ "$NODE_MAJOR" -lt 20 ]; then
   exit 1
 fi
 docker info >/dev/null 2>&1 || { fail "docker is not running"; exit 1; }
-[ -f "$PLUGIN_DIR/.claude-plugin/plugin.json" ] || { fail "$PLUGIN_DIR is not a plugin dir"; exit 1; }
+# Validate the manifest parses and has the fields Claude Code requires, not
+# just that a file exists at that path — a truncated/malformed plugin.json
+# would otherwise pass this gate and fail later, deep inside the agent run,
+# with a far less clear error than a preflight message naming the problem.
+PLUGIN_MANIFEST_ERROR=$(node -e '
+  const fs = require("fs");
+  const path = process.argv[1];
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(path, "utf8"));
+  } catch (err) {
+    console.log(`${path} is not valid JSON: ${err.message}`);
+    process.exit(0);
+  }
+  if (!manifest.name || !manifest.version) {
+    console.log(`${path} is missing required "name"/"version" fields`);
+  }
+' "$PLUGIN_DIR/.claude-plugin/plugin.json" 2>&1) || PLUGIN_MANIFEST_ERROR="$PLUGIN_DIR/.claude-plugin/plugin.json not found or unreadable"
+[ -z "$PLUGIN_MANIFEST_ERROR" ] || { fail "$PLUGIN_MANIFEST_ERROR"; exit 1; }
 if [ ! -d "$SCRIPT_DIR/node_modules/@volcano.dev/sdk" ]; then
   log "installing verification tooling deps (@volcano.dev/sdk)"
   (cd "$SCRIPT_DIR" && npm install --silent) || { fail "npm install for verification tooling failed"; exit 1; }
