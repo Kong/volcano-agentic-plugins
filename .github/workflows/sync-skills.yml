@@ -130,3 +130,11 @@ jobs:
           else
             gh pr create --base main --head "$branch" --title "$title" --body "$body"
           fi
+
+          # Arm squash auto-merge (the repo's only enabled merge method) so the
+          # sync lands on main once the required `validate` check passes,
+          # instead of waiting for a maintainer. Fall back to an immediate merge
+          # if the PR is already clean (validate already green, nothing to wait
+          # on) — GitHub rejects --auto on an already-mergeable PR.
+          gh pr merge "$branch" --auto --squash \
+            || gh pr merge "$branch" --squash
