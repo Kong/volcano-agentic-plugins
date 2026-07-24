@@ -175,7 +175,10 @@ if [ -d "$SANDBOX_DIR/volcano" ]; then
   # function; `_`-prefixed entries are shared code, not functions).
   FN_NAMES=""
   if [ -d "$SANDBOX_DIR/volcano/functions" ]; then
-    FN_NAMES=$(find "$SANDBOX_DIR/volcano/functions" -mindepth 1 -maxdepth 1 -not -name '_*' -exec basename {} \; | sed 's/\.[^.]*$//' | sort -u)
+    # Only .js files and directory-functions are function candidates. Exclude
+    # `_*` (shared code), `node_modules`, and manifests like `package.json`
+    # — otherwise `package.json` becomes a bogus function named "package".
+    FN_NAMES=$(find "$SANDBOX_DIR/volcano/functions" -mindepth 1 -maxdepth 1 -not -name '_*' -not -name 'node_modules' \( -name '*.js' -o -type d \) -exec basename {} \; | sed 's/\.js$//' | sort -u)
   fi
 
   # `volcano functions invoke` (CLI) has no way to supply a bearer token, and
