@@ -14,7 +14,7 @@
         "name": "Volcano",
         "email": "support@volcano.dev"
       },
-      "version": "0.2.1",
+      "version": "0.2.2",
       "category": "development",
       "source": "./plugins/claude-code",
       "homepage": "https://volcano.dev",

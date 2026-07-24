@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.1...v0.2.2) (2026-07-24)
+
+
+### Bug Fixes
+
+* **release:** skip upstream skill-pin freshness check when building from tag ([#37](https://github.com/Kong/volcano-agentic-plugins/issues/37)) ([093c0d3](https://github.com/Kong/volcano-agentic-plugins/commit/093c0d3ffe5f49f117e6702aa6e2c3ee45c4fa1c))
+
 ## [0.2.1](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.0...v0.2.1) (2026-07-24)
 
 
