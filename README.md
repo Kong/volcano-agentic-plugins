@@ -64,10 +64,10 @@ pnpm sync:skills
 make test
 ```
 
-A daily scheduled workflow also keeps `main` synced automatically, and any PR
-blocked by drift gets an automatic `needs-skills-sync`-labeled companion PR
-opened against its own branch for a reviewer to merge. See "Automated sync"
-in `CONTRIBUTING.md` for details.
+A daily scheduled workflow also keeps `main` synced automatically and
+squash-merges its sync PR once `validate` passes; any PR blocked by drift gets
+a companion PR opened against its own branch and auto-merged into it to clear
+the drift. See "Automated sync" in `CONTRIBUTING.md` for details.
 
 ## Development
 
