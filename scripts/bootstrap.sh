@@ -120,10 +120,17 @@ END_MARKER="# <<< VOLCANO MANAGED BLOCK <<<"
 # remove_block. Safety: if a begin marker has no matching end marker (a
 # partial write or a hand-edited file), the block is NOT a well-formed block,
 # so everything from the begin marker onward is emitted unchanged rather than
-# silently dropped — preserving user content instead of eating it.
+# silently dropped — preserving user content instead of eating it. A second
+# begin marker closes the first as malformed and starts a fresh candidate, so a
+# file that ends up with two begins and one end (e.g. a prior run restored a
+# dangling begin then appended a complete block after it) never pairs the first
+# begin with the later end and eats the user content in between.
 strip_managed_block() {
     awk -v b="$BEGIN_MARKER" -v e="$END_MARKER" '
-    $0==b && !inblk { inblk=1; n=0; next }
+    $0==b {
+      if (inblk) { print b; for (i=1;i<=n;i++) print buf[i] }  # prior begin had no end: restore it, start fresh
+      inblk=1; n=0; next
+    }
     inblk {
       if ($0==e) { inblk=0; next }   # complete block: drop begin..end inclusive
       buf[++n]=$0                      # buffer candidate block body meanwhile
