@@ -60,19 +60,25 @@ above:
   (`workflow_dispatch`). It bumps `sources/volcano-skills` to the canonical
   repo's default-branch HEAD, regenerates materialized skills, and opens or
   refreshes a `chore/sync-volcano-skills` PR against `main` when there's
-  drift. This is what keeps `main` from drifting when no one has an open PR.
+  drift, then arms squash auto-merge so it lands on `main` on its own once the
+  required `validate` check passes. This is what keeps `main` from drifting
+  when no one has an open PR.
 - The `auto-fix-skill-drift` job in `.github/workflows/ci.yml` runs whenever
   an open PR's `validate` job fails specifically because of skill drift (it
   re-checks `check:skill-submodules` on its own before doing anything, so
   unrelated CI failures are left alone). It opens a small
   `chore/sync-volcano-skills-<pr-number>` PR with the bump, based on that
-  PR's own branch — not `main` — labels the original PR `needs-skills-sync`,
-  and comments with a link to the fix-up PR.
+  PR's own branch — not `main` — and squash-merges it straight into that
+  branch so CI there re-runs and passes, with no label, comment, or maintainer
+  step.
 
-Both automations only ever open PRs for a human to review and merge; neither
-ever pushes directly to someone else's branch or merges anything itself.
-`main` also has branch protection requiring the `validate` check to pass, so a
-PR left failing on skill drift cannot be merged until the fix-up PR lands.
+Both automations merge their own sync PRs automatically once checks pass
+instead of waiting for a maintainer: the `main` sync arms squash auto-merge
+(gated on the required `validate` check), and the drift fix squash-merges its
+companion PR into the affected PR's own branch (which has no required checks),
+landing the bump there so its CI re-runs. `main` still has branch protection
+requiring `validate`, so a PR left failing on skill drift cannot merge until
+its fix-up lands — which now happens automatically.
 
 ## Validation before committing
 
@@ -249,8 +255,8 @@ unless the invariant itself is intentionally changed and documented here.
 
 `main` is branch-protected and requires the `validate` job to pass before a
 PR can merge. If `validate` fails because of skill drift, see "Automated
-sync" above — a `needs-skills-sync`-labeled companion PR gets opened
-automatically against the failing PR's own branch.
+sync" above — a companion PR gets opened automatically against the failing
+PR's own branch and squash-merged into it to clear the drift.
 
 Third-party actions referenced from `.github/workflows/*.yml` are pinned to a
 full commit SHA with a trailing `# vX.Y.Z` comment, not a mutable tag

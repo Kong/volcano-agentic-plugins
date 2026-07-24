@@ -143,11 +143,10 @@ jobs:
           private-key: ${{ secrets.VOLCANO_APP_KEY }}
           # Without an explicit permission-* input, the minted token inherits
           # every permission the App installation holds, not just what this
-          # job needs (push a branch, open/edit the PR, and label/comment on
-          # the original PR). Scope it down explicitly.
+          # job needs (push a branch, open the sync PR, and merge it). Scope it
+          # down explicitly.
           permission-contents: write
           permission-pull-requests: write
-          permission-issues: write
 
       - name: Checkout PR head
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -237,7 +236,7 @@ jobs:
           title="chore: sync volcano-skills submodule into #${pr_number}"
           body="Automated sync of \`sources/volcano-skills\` to \`${SYNC_SHORT_SHA}\`, unblocking #${pr_number} whose \`check:skill-submodules\` check is failing because its pin is behind the canonical repo's HEAD.
 
-          Merge this into \`${feature_branch}\` to unblock CI on #${pr_number}."
+          Merges into \`${feature_branch}\` automatically to unblock CI on #${pr_number}."
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -248,9 +247,6 @@ jobs:
           git commit -m "$title"
           git push --force-with-lease origin "$sync_branch"
 
-          gh label create "needs-skills-sync" --color "FBCA04" \
-            --description "Blocked on an automated volcano-skills submodule sync PR" --force
-
           if [ -n "$(gh pr list --head "$sync_branch" --state open --json number --jq '.[].number')" ]; then
             gh pr edit "$sync_branch" --title "$title" --body "$body"
             sync_pr_number="$(gh pr view "$sync_branch" --json number --jq '.number')"
@@ -259,8 +255,10 @@ jobs:
             sync_pr_number="${sync_pr_url##*/}"
           fi
 
-          already_flagged="$(gh pr view "$pr_number" --json labels --jq '[.labels[].name] | any(. == "needs-skills-sync")')"
-          gh pr edit "$pr_number" --add-label "needs-skills-sync"
-          if [ "$already_flagged" != "true" ]; then
-            gh pr comment "$pr_number" --body "⚠️ \`volcano-skills\` has moved upstream and this PR's \`check:skill-submodules\` check is failing as a result. Opened #${sync_pr_number} with the submodule bump — merge it into \`${feature_branch}\` to unblock CI here."
-          fi
+          # Land the bump on the failing PR's branch automatically so its CI
+          # re-runs and passes — no maintainer step, no "please merge" comment.
+          # The feature-branch base has no required checks, so the PR is already
+          # mergeable and --auto is rejected ("clean status"); fall back to an
+          # immediate squash merge. The sync was validated above.
+          gh pr merge "$sync_pr_number" --auto --squash \
+            || gh pr merge "$sync_pr_number" --squash
