@@ -15,10 +15,11 @@
 ## Prompt
 
 ```
-Build me a todo API using volcano.
+Build a todo app using volcano.
 ```
 
-Still bare on everything else (no mention of local vs. cloud, no mention of
+Kept identical to the `.auto/measure.sh` autoresearch experiment's fixed
+prompt for comparability. Still bare on everything else (no mention of local vs. cloud, no mention of
 deploying, no mention of testing) but now names "volcano" explicitly. This
 changed from the original bare `AGENTS.md`-example prompt ("Build me a todo
 API", no product name) after a live run showed the agent has no reliable way
