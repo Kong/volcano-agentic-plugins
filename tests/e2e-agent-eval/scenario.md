@@ -16,24 +16,26 @@
 ## Prompt
 
 ```
-Build a todo app using volcano.
+Build a todo API using volcano.
 ```
 
-Bare on everything else (no mention of local vs. cloud, no mention of
-deploying, no mention of testing) but names "volcano" explicitly. This
-changed from the original bare `AGENTS.md`-example prompt ("Build me a todo
-API", no product name) after a live run showed the agent has no reliable way
-to discover Volcano is relevant without an explicit mention: `AGENTS.md`
-isn't auto-loaded by the plugin mechanism itself (only the 12 domain skills'
-short descriptions are always-on, and none of them are worded to match a
-generic, product-unaware "build an app" prompt), so a fully bare prompt
-reliably produced a plain Express.js app with zero Volcano awareness. This
-prompt now isolates a different, narrower question: given the minimal signal
-a real user would actually type, does the agent then follow `AGENTS.md`'s
-default behaviors well (init → functions → auto local deploy → verify), or
-does it still thrash? The fully-bare-prompt / plugin-discoverability gap is
-tracked separately (VOL-473 covers the related install-skill-reliability
-finding from the same investigation).
+"API" (not "app") is deliberate: it biases the agent toward Volcano Function
+endpoints so there is at least one deployed Function to invoke-test — the
+whole point of this scenario (VOL-507). A bare "build a todo *app*" is
+equally valid but legitimately yields a client-side query-builder + RLS CRUD
+app with **zero Functions** (nothing to invoke); that SDK/client-side path is
+a separate test flavor ("Test A", tracked under VOL-507), measured by
+local-deploy-reached rather than function-invoke, and is not this scenario.
+
+Still bare on everything else (no mention of local vs. cloud, no mention of
+deploying, no mention of testing) but names "volcano" explicitly — a fully
+product-unaware prompt never engages the plugin at all (only the 12 domain
+skills' short descriptions are always-on; a bare "build an app" matches none
+of them and produced a plain Express.js app with zero Volcano awareness).
+That plugin-discoverability gap is tracked separately (VOL-473). What this
+scenario isolates: given minimal-but-product-named signal, does the agent
+follow `AGENTS.md`'s defaults well (init → functions → auto local deploy →
+invoke-verify), or thrash?
 
 ## Expected path (per `AGENTS.md`'s own documented defaults)
 
@@ -62,13 +64,15 @@ ends. This is the bar for this first cut of the scenario — see `README.md`
 for what's explicitly not graded yet (DB/migration correctness, RLS,
 frontend, cloud).
 
-**Known gap in this rubric, not yet observed:** the prompt says "app," not
-"API," and a legitimate Volcano todo app could be pure client-side
+**Two valid architectures, two tests (VOL-507):** a todo backend is a
+legitimate build *either* as Volcano Functions *or* as pure client-side
 query-builder + RLS CRUD with no Function at all (a real, skill-endorsed
 architecture for simple per-user data, per `volcano_sdk`'s own router
-guidance). That would fail this pass gate despite being a correct build.
-Every real run so far has gone the Function route regardless, but this gate
-doesn't verify that path is actually the one being exercised.
+guidance). This scenario ("Test B") uses the "API" prompt to force the
+Function path so the invoke gate is meaningful. The no-Function SDK path
+("Test A", "build a todo app") is graded differently — local-deploy-reached
+(migrations/frontend/any local artifact), since there is nothing to invoke —
+and is out of scope for *this* file's pass gate.
 
 ## Rubric (recorded, not all blocking for pass/fail)
 
