@@ -122,19 +122,44 @@ jobs:
           # branch switch and commit from the index.
           git checkout -B "$branch"
           git commit -m "$title"
-          git push --force-with-lease origin "$branch"
 
-          if [ -n "$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" ]; then
-            gh pr edit "$branch" --title "$title" --body "$body"
-            echo "Refreshed existing PR for $branch to ${{ steps.bump.outputs.short }}."
-          else
-            gh pr create --base main --head "$branch" --title "$title" --body "$body"
-          fi
+          # Retry transient GitHub API / network failures with exponential
+          # backoff. The createPullRequest mutation in particular can return a
+          # bare HTTP 500 during GitHub-side blips; without this the whole run
+          # fails and the sync is silently dropped until the next dispatch or
+          # the daily cron. On persistent failure we still exit non-zero so the
+          # run goes red.
+          retry() {
+            local n=1 max=5 delay=10
+            until "$@"; do
+              if [ "$n" -ge "$max" ]; then
+                echo "::error::\`$*\` still failing after $max attempts" >&2
+                return 1
+              fi
+              echo "attempt $n/$max failed: \`$*\`; retrying in ${delay}s" >&2
+              sleep "$delay"; n=$((n + 1)); delay=$((delay * 2))
+            done
+          }
 
-          # Arm squash auto-merge (the repo's only enabled merge method) so the
-          # sync lands on main once the required `validate` check passes,
-          # instead of waiting for a maintainer. Fall back to an immediate merge
-          # if the PR is already clean (validate already green, nothing to wait
-          # on) — GitHub rejects --auto on an already-mergeable PR.
-          gh pr merge "$branch" --auto --squash \
-            || gh pr merge "$branch" --squash
+          # Idempotent so retries are safe: it re-checks whether the PR already
+          # exists each attempt, so a create that half-succeeds before erroring
+          # is picked up as an edit on the next round rather than tripping a
+          # "pull request already exists" 422. Arms squash auto-merge (the
+          # repo's only enabled merge method) so the sync lands once `validate`
+          # passes; falls back to an immediate squash when the PR is already
+          # mergeable (GitHub rejects --auto in that case). Each critical step
+          # is `|| return 1` because set -e is suppressed inside `until`.
+          ensure_pr() {
+            git push --force-with-lease origin "$branch" || return 1
+            if [ -n "$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" ]; then
+              gh pr edit "$branch" --title "$title" --body "$body" || return 1
+              echo "Refreshed existing PR for $branch to ${{ steps.bump.outputs.short }}."
+            else
+              gh pr create --base main --head "$branch" --title "$title" --body "$body" || return 1
+            fi
+            gh pr merge "$branch" --auto --squash \
+              || gh pr merge "$branch" --squash \
+              || return 1
+          }
+
+          retry ensure_pr
