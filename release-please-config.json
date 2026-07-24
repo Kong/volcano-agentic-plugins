@@ -10,6 +10,7 @@
       "pull-request-title-pattern": "release: ${version}",
       "bump-minor-pre-major": true,
       "extra-files": [
+        { "type": "json", "path": "plugins/vscode/package.json", "jsonpath": "$.version" },
         { "type": "json", "path": "plugins/claude-code/.claude-plugin/plugin.json", "jsonpath": "$.version" },
         { "type": "json", "path": "plugins/claude-desktop/manifest.json", "jsonpath": "$.version" },
         { "type": "json", "path": "plugins/codex/.codex-plugin/plugin.json", "jsonpath": "$.version" },
