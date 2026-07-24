@@ -185,33 +185,87 @@ install_volcano_content() {
   install_manual_skills
 }
 
+BEGIN_MARKER="# >>> VOLCANO MANAGED BLOCK (do not edit) >>>"
+END_MARKER="# <<< VOLCANO MANAGED BLOCK <<<"
+
+# Emit $file with a *complete* managed block (begin + matching end) removed and
+# trailing blank lines trimmed. If a begin marker has no matching end (a partial
+# write or a hand-edit), the content from the begin marker onward is restored
+# verbatim rather than silently eaten. Shared by upsert_block and remove_block.
+strip_managed_block() {
+  awk -v b="$BEGIN_MARKER" -v e="$END_MARKER" '
+    $0==b && !inblk { inblk=1; n=0; next }
+    inblk {
+      if ($0==e) { inblk=0; next }
+      buf[++n]=$0
+      next
+    }
+    { print }
+    END {
+      if (inblk) {
+        print b
+        for (i=1;i<=n;i++) print buf[i]
+      }
+    }
+  ' "$1" | awk 'NF{last=NR} {line[NR]=$0} END{for(i=1;i<=last;i++) print line[i]}'
+}
+
 upsert_block() {
   file="$1"
   body="$2"
-  marker_begin="# >>> VOLCANO MANAGED BLOCK (do not edit) >>>"
-  marker_end="# <<< VOLCANO MANAGED BLOCK <<<"
   mkdir -p "$(dirname "$file")"
   [ -f "$file" ] || : >"$file"
 
-  if grep -qF "$marker_begin" "$file" 2>/dev/null; then
+  if grep -qF "$BEGIN_MARKER" "$file" 2>/dev/null; then
     action="updated"
   else
     action="added"
   fi
 
   tmp="$(mktemp)"
-  awk -v b="$marker_begin" -v e="$marker_end" '
-    $0==b {inblk=1; next}
-    $0==e {inblk=0; next}
-    !inblk {print}
-  ' "$file" | awk 'NF{last=NR} {line[NR]=$0} END{for(i=1;i<=last;i++) print line[i]}' >"$tmp"
+  strip_managed_block "$file" >"$tmp"
   mv "$tmp" "$file"
   [ -s "$file" ] && printf '\n' >>"$file"
-  printf '%s\n%s\n%s\n' "$marker_begin" "$body" "$marker_end" >>"$file"
+  printf '%s\n%s\n%s\n' "$BEGIN_MARKER" "$body" "$END_MARKER" >>"$file"
   log "$action managed Volcano block in $file"
 }
 
+# Strip the managed block if present, leaving all other content intact. Used in
+# the plugin-first path: when the Volcano plugin is installed, the plugin is the
+# source of truth, so any managed block a prior no-plugin run left behind must go
+# (otherwise it keeps a second, independently-stale AGENTS.md always-on via an
+# @-import alongside the plugin).
+remove_block() {
+  file="$1"
+  [ -f "$file" ] || return 0
+  grep -qF "$BEGIN_MARKER" "$file" 2>/dev/null || return 0
+  tmp="$(mktemp)"
+  strip_managed_block "$file" >"$tmp"
+  mv "$tmp" "$file"
+  log "removed stale managed Volcano block in $file (plugin present — plugin is the source of truth)"
+}
+
+# Does Claude Code have the Volcano plugin installed? Read its authoritative
+# installed-plugins record rather than scanning for plugin-shaped files: the
+# marketplace clone carries the same files even when nothing is installed, so a
+# bare file scan false-positives on "marketplace added but plugin not installed".
+claude_has_volcano_plugin() {
+  record="$HOME/.claude/plugins/installed_plugins.json"
+  [ -f "$record" ] && grep -q '"volcano@volcano-agentic-plugins"' "$record"
+}
+
 wire_existing_claude_config() {
+  # Plugin-first: when the Claude Code plugin is installed it is the source of
+  # truth (its skills carry the guidance, loaded on demand). Wiring a
+  # ~/.volcano/AGENTS.md @-import here would just add a second, independently
+  # stale always-on copy that drifts once the plugin updates and ~/.volcano does
+  # not. So don't wire it — and strip any block a prior no-plugin run left behind.
+  if claude_has_volcano_plugin; then
+    log "Claude Code Volcano plugin detected — plugin is the source of truth; not wiring ~/.volcano fallback"
+    remove_block "$HOME/.claude/CLAUDE.md"
+    return 0
+  fi
+
   # Claude Code supports @path imports. Only modify an existing global CLAUDE.md;
   # plugin skills remain primary, ~/.volcano/AGENTS.md is the fallback.
   [ -f "$HOME/.claude/CLAUDE.md" ] || return 0

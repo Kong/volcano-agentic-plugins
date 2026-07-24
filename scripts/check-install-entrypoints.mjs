@@ -33,6 +33,12 @@ function assertCliOnlyInstaller(content, label) {
   assert(content.includes("releases/latest/download"), `${label} must keep GitHub release download as fallback`);
   assert(!content.includes("bootstrap.sh"), `${label} must not use bootstrap.sh`);
   assert(!content.includes("--agent"), `${label} must not run full bootstrap agent wiring or download runtime skills`);
+  // Plugin-first wiring (mirrors scripts/bootstrap.sh): when the Volcano plugin
+  // is installed it is the source of truth, so the installer must NOT wire a
+  // second, independently-stale ~/.volcano/AGENTS.md @-import into CLAUDE.md — it
+  // must detect the plugin and strip any block a prior no-plugin run left behind.
+  assert(content.includes("claude_has_volcano_plugin"), `${label} must detect an installed Claude Code plugin before wiring`);
+  assert(content.includes("remove_block"), `${label} must strip a stale managed block when the plugin is present`);
 }
 
 function assertAgnosticSkill(content, label) {
