@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.2...v0.2.3) (2026-07-24)
+
+
+### Bug Fixes
+
+* **install-volcano:** plugin-first wiring, no stale ~/.volcano fallback alongside a plugin ([#40](https://github.com/Kong/volcano-agentic-plugins/issues/40)) ([6da9382](https://github.com/Kong/volcano-agentic-plugins/commit/6da9382eb679391fa49bb924a1f202e529eadc3f))
+
 ## [0.2.2](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.1...v0.2.2) (2026-07-24)
 
 
