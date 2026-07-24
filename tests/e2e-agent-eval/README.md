@@ -1,9 +1,10 @@
 # End-to-end agent eval (live, tools-enabled)
 
 Measures how easily a real coding agent — Claude Code with the `volcano`
-plugin installed, exactly as an end user would have it — gets from a bare
-"build me a todo API" prompt to a working, locally-deployed, invokable
-function, using only the `volcano` CLI and this plugin's skills. No scripted
+plugin's skill content, loaded straight from this repo (see Prerequisites) —
+gets from a bare "build a todo app using volcano" prompt to a working,
+locally-deployed, invokable function, using only the `volcano` CLI and this
+plugin's skills. No scripted
 steps are given to the agent; the point is to observe what it does with an
 underspecified prompt and measure the friction (or lack of it) along the way.
 
@@ -21,11 +22,15 @@ real command execution.
   deploy requires human device-code approval, which can't run unattended —
   that gets its own scenario later, once we're testing the auth-handling
   path specifically.
-- **Functions first.** The scenario asks for a full "todo API," but the
+- **Functions first.** The scenario asks for a full "todo app," but the
   pass/fail bar for this first cut is narrower: at least one function gets
   built, deployed locally, and successfully invoked. Database/migration
   correctness, RLS, and a frontend are not graded yet — they can be added as
-  the scenario matures.
+  the scenario matures. This also means a legitimate Volcano "todo app"
+  built as pure client-side query-builder + RLS CRUD (no Function at all —
+  a real, skill-endorsed architecture choice for simple per-user data) would
+  fail this specific pass gate; not yet observed in a real run, but a known
+  gap in this rubric, not in the app it would produce.
 
 See `scenario.md` for the exact prompt, expected path, and rubric.
 
@@ -49,15 +54,18 @@ collide** — not handled yet, don't parallelize runs on one host.
 - Node.js >= 20 (`@volcano.dev/sdk`, used by `invoke-with-auth.mjs`, declares
   this as a hard requirement) — `run.sh` checks this in preflight and fails
   clearly rather than letting `npm install` warn-and-continue on an older version.
-- `claude` CLI (Claude Code) with the `volcano` plugin installed and enabled
-  from the `volcano-agentic-plugins` marketplace:
-  ```sh
-  claude plugin marketplace update volcano-agentic-plugins
-  claude plugin list   # confirm volcano@volcano-agentic-plugins is enabled
-  ```
-  The harness does not install the plugin for you — it only checks that it's
-  present, since "does a real plugin install behave correctly" is part of
-  what's being measured.
+- `claude` CLI (Claude Code) on `PATH` and authenticated (`claude auth
+  status`). The plugin itself does **not** need to be installed from the
+  marketplace — `run.sh` loads it straight from this repo
+  (`--plugin-dir plugins/claude-code`), not from whatever's
+  installed/cached on the machine. This is deliberate, not just convenient:
+  a marketplace refresh doesn't always propagate promptly (see PR #19/#20's
+  sync lag), and testing the installed copy would mean testing whatever
+  happened to be cached rather than this repo's actual current content. It
+  also sidesteps a real footgun: the installed marketplace plugin is
+  registered at Claude Code's "user" settings scope, and excluding that scope
+  (see below) without `--plugin-dir` silently disables the plugin entirely
+  rather than just excluding stray personal config.
 
 ## Running it
 
@@ -71,7 +79,7 @@ Env vars (all optional):
 |---|---|---|
 | `CLAUDE_EVAL_MODEL` | `sonnet` | Model alias/name passed to `claude --model` |
 | `CLAUDE_EVAL_MAX_BUDGET_USD` | unset | Caps spend via `claude --max-budget-usd` |
-| `CLAUDE_EVAL_TIMEOUT_SECS` | `600` | Wall-clock cap on the agent session — 10 minutes is intentionally generous for a simple todo API build/deploy/verify; a run that needs longer is itself a finding, not a reason to raise this |
+| `CLAUDE_EVAL_TIMEOUT_SECS` | `600` | Wall-clock cap on the agent session — 10 minutes is intentionally generous for a simple todo app build/deploy/verify; a run that needs longer is itself a finding, not a reason to raise this |
 | `CLAUDE_EVAL_PROMPT` | see `scenario.md` | Override the prompt |
 | `CLAUDE_EVAL_KEEP_SANDBOX` | unset | Skip deleting the scratch dir afterward |
 
@@ -99,6 +107,19 @@ agent's self-reported "done"). Results land in `results/<timestamp>/`:
 
 ## Findings so far (from real runs, not speculation)
 
+- **A machine's global `~/.claude/CLAUDE.md` can make the agent refuse to
+  proceed at all.** If it imports a corrupted `~/.volcano/AGENTS.md` (HTML
+  instead of markdown) alongside unrelated personal files, the agent can
+  reasonably read that combination as a prompt-injection attempt and stop to
+  ask whether to trust it, rather than building anything. `run.sh` now runs
+  with `--setting-sources project,local` to exclude "user" scope so the eval
+  measures the plugin's own content, not whatever else happens to be in a
+  given machine's global config. This only works combined with
+  `--plugin-dir` — excluding "user" scope while relying on the
+  marketplace-installed plugin (registered at "user" scope) silently
+  disables the plugin entirely, confirmed directly: a run in that
+  configuration had no idea what "volcano" meant, web-searched for a
+  nonexistent "Volcano framework", and built a plain static-HTML todo app.
 - **Bare prompt with no product name never engages the plugin.** "Build me a
   todo API" (no mention of "volcano") produced a plain Express.js app with
   zero Volcano awareness — the plugin's 12 skills are only loaded on-invoke,

@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Runs the todo-api-functions-local scenario (see scenario.md): a bare "build
-# me a todo API" prompt against Claude Code + the volcano plugin, in a fresh
-# scratch directory, local mode only. See README.md for env vars and output.
+# a todo app using volcano" prompt against Claude Code + the volcano plugin,
+# in a fresh scratch directory, local mode only. See README.md for env vars
+# and output.
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROMPT="${CLAUDE_EVAL_PROMPT:-Build me a todo API using volcano.}"
+PLUGIN_DIR="$(cd "$SCRIPT_DIR/../../plugins/claude-code" && pwd)"
+[ -n "$PLUGIN_DIR" ] || { printf '[e2e-agent-eval] FAIL: %s\n' "could not resolve plugins/claude-code relative to $SCRIPT_DIR" >&2; exit 1; }
+PROMPT="${CLAUDE_EVAL_PROMPT:-Build a todo app using volcano.}"  # bare and product-named, per scenario.md's Prompt section
 MODEL="${CLAUDE_EVAL_MODEL:-sonnet}"
-TIMEOUT_SECS="${CLAUDE_EVAL_TIMEOUT_SECS:-600}"  # a simple todo API build/deploy/verify should not need longer than this
+TIMEOUT_SECS="${CLAUDE_EVAL_TIMEOUT_SECS:-600}"  # a simple todo app build/deploy/verify should not need longer than this
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"
 RESULTS_DIR="$SCRIPT_DIR/results/$RUN_ID"
 
@@ -27,10 +30,25 @@ if [ "$NODE_MAJOR" -lt 20 ]; then
   exit 1
 fi
 docker info >/dev/null 2>&1 || { fail "docker is not running"; exit 1; }
-if ! claude plugin list 2>/dev/null | grep -q 'volcano@volcano-agentic-plugins'; then
-  fail "volcano@volcano-agentic-plugins plugin not installed/enabled — run: claude plugin marketplace update volcano-agentic-plugins"
-  exit 1
-fi
+# Validate the manifest parses and has the fields Claude Code requires, not
+# just that a file exists at that path — a truncated/malformed plugin.json
+# would otherwise pass this gate and fail later, deep inside the agent run,
+# with a far less clear error than a preflight message naming the problem.
+PLUGIN_MANIFEST_ERROR=$(node -e '
+  const fs = require("fs");
+  const path = process.argv[1];
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(path, "utf8"));
+  } catch (err) {
+    console.log(`${path} is not valid JSON: ${err.message}`);
+    process.exit(0);
+  }
+  if (!manifest.name || !manifest.version) {
+    console.log(`${path} is missing required "name"/"version" fields`);
+  }
+' "$PLUGIN_DIR/.claude-plugin/plugin.json" 2>&1) || PLUGIN_MANIFEST_ERROR="$PLUGIN_DIR/.claude-plugin/plugin.json not found or unreadable"
+[ -z "$PLUGIN_MANIFEST_ERROR" ] || { fail "$PLUGIN_MANIFEST_ERROR"; exit 1; }
 if [ ! -d "$SCRIPT_DIR/node_modules/@volcano.dev/sdk" ]; then
   log "installing verification tooling deps (@volcano.dev/sdk)"
   (cd "$SCRIPT_DIR" && npm install --silent) || { fail "npm install for verification tooling failed"; exit 1; }
@@ -85,10 +103,36 @@ log "running agent (model=$MODEL, timeout=${TIMEOUT_SECS}s)"
 # agent that this specific harness has no one to confirm with.
 EVAL_SYSTEM_NOTE="This is a non-interactive, single-turn evaluation session — no human is available to answer a follow-up confirmation question. If you would normally pause to ask before executing a plan, proceed directly instead."
 
+# Two things, both load-bearing, not cosmetic:
+#
+# --plugin-dir loads the plugin straight from this repo's working tree
+# instead of whatever's installed/cached on the tester's machine (which we've
+# directly seen go stale: a marketplace refresh doesn't always propagate, and
+# the install skill doesn't reliably self-heal it either). This also makes
+# --setting-sources project,local below safe to use: the installed
+# marketplace plugin is registered at "user" settings scope (`claude plugin
+# list` shows "Scope: user"), so excluding "user" scope with that plugin path
+# silently disables the plugin entirely — confirmed directly: a run with
+# --setting-sources set but no --plugin-dir lost all skill visibility, had no
+# idea what "volcano" meant, web-searched for a nonexistent "Volcano
+# framework", and built a plain static-HTML todo app instead. --plugin-dir
+# doesn't depend on "user" scope at all, so it isn't affected.
+#
+# --setting-sources project,local (excludes "user" scope, i.e. ~/.claude/CLAUDE.md
+# and ~/.claude/settings.json) is still needed for a different reason: a
+# machine's global CLAUDE.md can import unrelated personal files alongside a
+# corrupted ~/.volcano/AGENTS.md (HTML instead of markdown — a separate,
+# known issue). Loaded together, the agent can reasonably read that
+# combination as a prompt-injection attempt and refuse to proceed at all,
+# asking for confirmation before doing anything — confirmed directly: with
+# --setting-sources unset, a real run stopped after exactly one turn to ask
+# whether it should trust or ignore those global files.
 CLAUDE_ARGS=(
   -p "$PROMPT"
   --model "$MODEL"
   --permission-mode bypassPermissions
+  --plugin-dir "$PLUGIN_DIR"
+  --setting-sources project,local
   --output-format stream-json
   --append-system-prompt "$EVAL_SYSTEM_NOTE"
   --verbose
