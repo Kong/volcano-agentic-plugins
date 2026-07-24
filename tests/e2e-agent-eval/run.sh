@@ -101,7 +101,18 @@ log "running agent (model=$MODEL, timeout=${TIMEOUT_SECS}s)"
 # zero build steps taken, having only presented a plan. This does not change
 # the scenario prompt itself (still bare per scenario.md) — it only tells the
 # agent that this specific harness has no one to confirm with.
-EVAL_SYSTEM_NOTE="This is a non-interactive, single-turn evaluation session — no human is available to answer a follow-up confirmation question. If you would normally pause to ask before executing a plan, proceed directly instead."
+#
+# We ALSO prepend AGENTS.md: the "build -> auto local deploy by default" rule
+# lives in AGENTS.md, not the on-invoke skills. A real plugin user gets it via
+# the ~/.claude/CLAUDE.md managed block (user scope), but --setting-sources
+# below excludes user scope, which would drop AGENTS.md too — and without it
+# the agent treats "Build a todo API" as build-ONLY and never deploys
+# (observed directly). Injecting it replicates the real UX without the
+# personal-config noise.
+EVAL_SYSTEM_NOTE="$(cat "$PLUGIN_DIR/skills/AGENTS.md")
+
+--- Evaluation harness note (not part of the Volcano instructions above) ---
+This is a non-interactive, single-turn evaluation session — no human is available to answer a follow-up confirmation question. If you would normally pause to ask before executing a plan, proceed directly instead."
 
 # Two things, both load-bearing, not cosmetic:
 #
@@ -189,18 +200,22 @@ if [ -d "$SANDBOX_DIR/volcano" ]; then
 
   node -e '
     const [volcanoDirPresent, localStackUp, functionsListRaw, authResultJson] = process.argv.slice(1);
-    const authResult = JSON.parse(authResultJson);
+    const a = JSON.parse(authResultJson);
     process.stdout.write(JSON.stringify({
       volcano_dir_present: volcanoDirPresent === "true",
       local_stack_up: localStackUp === "true",
       functions_list_raw: functionsListRaw,
-      auth_error: authResult.auth_error,
-      invocations: authResult.invocations,
+      auth_error: a.auth_error,
+      round_trip_ok: a.round_trip_ok === true,
+      any_2xx: a.any_2xx === true,
+      any_5xx: a.any_5xx === true,
+      probe: a.probe ?? null,
+      invocations: a.invocations,
     }, null, 2) + "\n");
   ' true "$LOCAL_UP" "$FUNCTIONS_OUT" "$AUTH_RESULT" >"$VERIFY_JSON"
 else
   cat >"$VERIFY_JSON" <<'EOF'
-{"volcano_dir_present": false, "local_stack_up": false, "functions_list_raw": "", "auth_error": null, "invocations": []}
+{"volcano_dir_present": false, "local_stack_up": false, "functions_list_raw": "", "auth_error": null, "round_trip_ok": false, "any_2xx": false, "any_5xx": false, "probe": null, "invocations": []}
 EOF
 fi
 
@@ -208,21 +223,14 @@ log "analyzing transcript"
 node "$SCRIPT_DIR/analyze-transcript.mjs" "$RESULTS_DIR/transcript.jsonl" >"$RESULTS_DIR/metrics.json" \
   || fail "transcript analysis failed (see $RESULTS_DIR/transcript.jsonl directly)"
 
+# Pass = a CREATE->LIST round-trip succeeded (the probe todo a create
+# persisted came back from a list). Stronger than "any 2xx": a broken create
+# (e.g. `.insert(...).select()` -> HTTP 500) no longer passes just because a
+# trivially-working list returns an empty 2xx array. See invoke-with-auth.mjs.
 PASS="false"
 if node -e '
   const v = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
-  // Per scenario.md: "2xx, parseable JSON body" — a 2xx status with a
-  // non-JSON string body (the SDK returns raw strings for non-JSON
-  // responses) must not count as a pass.
-  const isParseableJson = (data) => {
-    if (data !== null && typeof data === "object") return true;
-    if (typeof data !== "string") return false;
-    try { JSON.parse(data); return true; } catch { return false; }
-  };
-  const ok = (v.invocations || []).some((i) =>
-    !i.error && i.status >= 200 && i.status < 300 && isParseableJson(i.data)
-  );
-  process.exit(ok ? 0 : 1);
+  process.exit(v.round_trip_ok === true ? 0 : 1);
 ' "$VERIFY_JSON"; then
   PASS="true"
 fi
@@ -235,7 +243,7 @@ AUTH_ERROR_NOTE=$(node -e '
 {
   echo "# Result: todo-api-functions-local ($RUN_ID)"
   echo
-  echo "**Pass:** $PASS  (at least one deployed function invoked successfully, authenticated)"
+  echo "**Pass:** $PASS  (authenticated create->list round-trip: a created todo is returned by a list)"
   echo "**Agent exit code:** $AGENT_EXIT"
   echo "**Agent wall time:** $((AGENT_END - AGENT_START))s"
   if [ -n "$AUTH_ERROR_NOTE" ]; then

@@ -55,14 +55,17 @@ invoke-verify), or thrash?
 
 ## Pass condition
 
-At least one function deployed under `volcano/functions/` responds
-successfully (2xx, parseable JSON body) to an independent, **authenticated**
-invocation (`invoke-with-auth.mjs`, via a real SDK session — not `volcano
-functions invoke`, which has no way to supply a bearer token and would 401 a
-correctly-secured function) made by the harness *after* the agent session
-ends. This is the bar for this first cut of the scenario — see `README.md`
-for what's explicitly not graded yet (DB/migration correctness, RLS,
-frontend, cloud).
+An independent, **authenticated create->list round-trip** succeeds
+(`invoke-with-auth.mjs`, via a real SDK session — not `volcano functions
+invoke`, which has no token flag and would 401 a secured function): the
+harness signs up a throwaway user, fires a unique-titled create probe at
+every deployed function, then lists — and passes only if that exact probe
+todo comes back. This is deliberately stronger than "any function returns
+2xx": a broken create (e.g. `volcano.insert(...).select()` → HTTP 500, the
+real bug that motivated this) previously passed because a trivially-working
+list returned an empty 2xx array. `any_2xx`/`any_5xx` are also recorded for
+diagnosis. See `README.md` for what's still not graded (migration
+correctness beyond persistence, RLS isolation across users, frontend, cloud).
 
 **Two valid architectures, two tests (VOL-507):** a todo backend is a
 legitimate build *either* as Volcano Functions *or* as pure client-side
