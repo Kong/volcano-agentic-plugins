@@ -1,6 +1,6 @@
 {
   "name": "volcano",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Volcano agent skills and CLI for building and deploying apps and AI agents on Volcano from Codex. Work with functions, databases, storage, realtime, and auth through the Volcano SDK, and deploy straight from your editor.",
   "author": {
     "name": "Volcano",
