@@ -122,19 +122,59 @@ jobs:
           # branch switch and commit from the index.
           git checkout -B "$branch"
           git commit -m "$title"
-          git push --force-with-lease origin "$branch"
 
-          if [ -n "$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" ]; then
-            gh pr edit "$branch" --title "$title" --body "$body"
-            echo "Refreshed existing PR for $branch to ${{ steps.bump.outputs.short }}."
-          else
-            gh pr create --base main --head "$branch" --title "$title" --body "$body"
-          fi
+          # Retry transient GitHub API / network failures with exponential
+          # backoff. The createPullRequest mutation in particular can return a
+          # bare HTTP 500 during GitHub-side blips; without this the whole run
+          # fails and the sync is silently dropped until the next dispatch or
+          # the daily cron. On persistent failure we still exit non-zero so the
+          # run goes red.
+          retry() {
+            local n=1 max=5 delay=10
+            until "$@"; do
+              if [ "$n" -ge "$max" ]; then
+                echo "::error::\`$*\` still failing after $max attempts" >&2
+                return 1
+              fi
+              echo "attempt $n/$max failed: \`$*\`; retrying in ${delay}s" >&2
+              sleep "$delay"; n=$((n + 1)); delay=$((delay * 2))
+            done
+          }
 
-          # Arm squash auto-merge (the repo's only enabled merge method) so the
-          # sync lands on main once the required `validate` check passes,
-          # instead of waiting for a maintainer. Fall back to an immediate merge
-          # if the PR is already clean (validate already green, nothing to wait
-          # on) — GitHub rejects --auto on an already-mergeable PR.
-          gh pr merge "$branch" --auto --squash \
-            || gh pr merge "$branch" --squash
+          # Idempotent so retries are safe. Two half-success cases matter:
+          #  - a create that errors after the PR already exists server-side:
+          #    re-check open PRs each attempt and adopt it as an edit, never a
+          #    duplicate;
+          #  - a merge that lands on main but returns a transient error to the
+          #    client: if main is already pinned to the target sha the sync is
+          #    done, so short-circuit to success instead of opening a PR for
+          #    changes already on main (which 422s and would end the run red
+          #    despite a completed sync).
+          # Arms squash auto-merge (the repo's only enabled merge method) so the
+          # sync lands once `validate` passes; falls back to an immediate squash
+          # when the PR is already mergeable (GitHub rejects --auto then). Each
+          # critical step is `|| return 1` because set -e is suppressed inside
+          # `until` — including the open-PR lookup (assigned separately from
+          # `local`, whose own exit status would otherwise mask it), so a
+          # transient list failure retries rather than being misread as "no PR".
+          ensure_pr() {
+            git fetch --quiet origin main || return 1
+            if [ "$(git ls-tree origin/main sources/volcano-skills | awk '{print $3}')" = "${{ steps.bump.outputs.sha }}" ]; then
+              echo "main already pinned to ${{ steps.bump.outputs.short }}; sync already landed."
+              return 0
+            fi
+            git push --force-with-lease origin "$branch" || return 1
+            local open_num
+            open_num="$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" || return 1
+            if [ -n "$open_num" ]; then
+              gh pr edit "$branch" --title "$title" --body "$body" || return 1
+              echo "Refreshed existing PR for $branch to ${{ steps.bump.outputs.short }}."
+            else
+              gh pr create --base main --head "$branch" --title "$title" --body "$body" || return 1
+            fi
+            gh pr merge "$branch" --auto --squash \
+              || gh pr merge "$branch" --squash \
+              || return 1
+          }
+
+          retry ensure_pr
