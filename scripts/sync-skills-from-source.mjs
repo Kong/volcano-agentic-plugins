@@ -9,6 +9,7 @@ const pluginSkillDirs = [
   "plugins/claude-code/skills",
   "plugins/claude-desktop/skills",
   "plugins/codex/skills",
+  "plugins/opencode/skills",
 ];
 const EXCLUDED_BASENAMES = new Set([".git", ".DS_Store", ".github"]);
 

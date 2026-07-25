@@ -122,7 +122,7 @@ for (const [path, label] of pluginFirstCopies) {
   else assert(script === canonicalScript, `${label} installer script has drifted from the other copies`);
 }
 
-for (const plugin of ["cursor", "claude-code", "claude-desktop", "codex"]) {
+for (const plugin of ["cursor", "claude-code", "claude-desktop", "codex", "opencode"]) {
   const skillPath = `plugins/${plugin}/skills/install-volcano/SKILL.md`;
   assert(existsSync(skillPath), `${plugin} materialized skills must expose install-volcano/SKILL.md`);
   assertAgnosticSkill(read(skillPath), `${plugin} install-volcano skill`);

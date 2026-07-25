@@ -9,6 +9,7 @@ const allowedCanonicalPrefixes = [
   "plugins/claude-code/skills/",
   "plugins/claude-desktop/skills/",
   "plugins/codex/skills/",
+  "plugins/opencode/skills/",
 ];
 
 async function walk(dir) {

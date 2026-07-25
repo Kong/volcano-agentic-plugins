@@ -14,6 +14,7 @@ Each IDE uses a different plugin format, so each gets its own directory.
 | [`claude-code`](claude-code) | Claude Code | `.claude-plugin/plugin.json` + materialized skills/command | scaffold |
 | [`claude-desktop`](claude-desktop) | Claude Desktop | MCP Bundle / Desktop Extension (`manifest.json`) + local setup/instruction server | scaffold |
 | [`codex`](codex) | Codex | `.codex-plugin/plugin.json` + materialized skills | scaffold |
+| [`opencode`](opencode) | opencode | Auto-discovered `skills/` bundle (no plugin manifest) | scaffold |
 
 > **Cursor is not a vsix host.** Do not point Cursor users at `vscode`.
 > Cursor and Claude Code plugins have no full MCP action surface yet because Volcano does not currently ship one.

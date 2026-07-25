@@ -9,6 +9,7 @@ const pluginSkillDirs = [
   "plugins/claude-code/skills",
   "plugins/claude-desktop/skills",
   "plugins/codex/skills",
+  "plugins/opencode/skills",
 ];
 // .git/.DS_Store are never meaningful content on either side. .github is
 // excluded ONLY from the source walk below (kept in sync with
