@@ -124,6 +124,59 @@ jobs:
 
           gh pr comment "$pr_number" --body "⚠️ Post-merge \`check:skill-submodules\` failed on \`main\`: \`sources/volcano-skills\` is behind the canonical repo's HEAD. The scheduled sync workflow will open a submodule-bump PR into \`main\` — merge it to restore the pin."
 
+  refresh-sync-pr:
+    name: Refresh the volcano-skills sync PR after main moves
+    # sync-skills.yml opens exactly one PR (head chore/sync-volcano-skills, base
+    # main) and arms squash auto-merge. When main advances, branch protection's
+    # strict "require branches up to date" requirement flips that PR to BEHIND,
+    # and GitHub's native auto-merge never rebases a BEHIND branch — so it sits
+    # open until the daily sync cron happens to rebuild it. Update just that one
+    # branch on every push to main so its `validate` check re-runs and the armed
+    # auto-merge lands it promptly. Surgically scoped to the sync PR only; no
+    # other PR is ever touched.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # No ambient GITHUB_TOKEN use: auth is entirely via the App-minted token below.
+    permissions: {}
+    concurrency:
+      group: refresh-sync-pr
+      cancel-in-progress: false
+    steps:
+      - name: Generate token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.VOLCANO_APP_ID }}
+          private-key: ${{ secrets.VOLCANO_APP_KEY }}
+          # The App token (not GITHUB_TOKEN) is required: update-branch pushes a
+          # merge commit to the sync branch, and pushes made with GITHUB_TOKEN do
+          # not re-trigger the `validate` workflow the armed auto-merge waits on.
+          # Scope down to only what update-branch needs.
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Update the sync PR branch if it is behind main
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          # Exactly the sync-to-main PR: head chore/sync-volcano-skills, base
+          # main. Never any other branch. sync-skills.yml reuses this single
+          # branch, so there is at most one such PR.
+          pr_number="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open \
+            --head chore/sync-volcano-skills --base main \
+            --json number --jq '.[].number')"
+          if [ -z "$pr_number" ]; then
+            echo "No open volcano-skills sync PR; nothing to refresh."
+            exit 0
+          fi
+          # update-branch merges main into the branch. It no-ops when already
+          # current and 422s on conflict; swallow both. ponytail: on conflict we
+          # no-op here — sync-skills.yml force-rebuilds the branch on its next
+          # run, so a conflicted sync PR is no worse off than without this job.
+          gh api --method PUT "repos/$GITHUB_REPOSITORY/pulls/$pr_number/update-branch" \
+            || echo "update-branch no-op or conflict for #$pr_number; leaving as-is."
+
   auto-fix-skill-drift:
     name: Auto-sync volcano-skills into failing PR
     needs: validate
