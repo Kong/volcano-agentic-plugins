@@ -16,7 +16,10 @@ scenario_setup() {
   (cd "$SANDBOX_DIR" && volcano init javascript >/dev/null 2>&1) || { fail "volcano init failed"; return 1; }
 }
 
-scenario_teardown() { pkill -f "volcano login" 2>/dev/null || true; }
+# No teardown needed: the shared runner's process-group KILL sweep reaps the
+# agent's backgrounded `volcano login` (a machine-wide `pkill` would wrongly
+# kill unrelated logins), and eval_restore_cli_auth puts the developer's auth
+# back.
 
 # Pass = the agent detected it was unauthenticated (via `volcano projects list`,
 # NOT `volcano status`), started `volcano login` as a background command, and

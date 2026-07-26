@@ -60,17 +60,21 @@ log "results: $RESULTS_DIR"
 export SANDBOX_DIR SCRIPT_DIR PLUGIN_DIR RESULTS_DIR TRANSCRIPT METRICS_JSON
 
 cleanup() {
-  scenario_teardown || true
+  eval_reap_new_logins || true           # reap any `volcano login` the agent left running (new pids only)
+  scenario_teardown || true              # while the eval's CLI auth is still active
+  eval_restore_cli_auth || true          # then put the developer's real auth back
   (cd "$SANDBOX_DIR" 2>/dev/null && volcano stop >/dev/null 2>&1) || true
   if [ -z "${CLAUDE_EVAL_KEEP_SANDBOX:-}" ]; then rm -rf "$SANDBOX_DIR"
   else log "keeping sandbox (CLAUDE_EVAL_KEEP_SANDBOX set): $SANDBOX_DIR"; fi
 }
 trap cleanup EXIT
 
+eval_snapshot_cli_auth  # preserve the developer's ~/.volcano auth across the run
 log "scenario setup"
 scenario_setup || { fail "scenario setup failed"; exit 1; }
 
 log "running agent (model=$MODEL, timeout=${TIMEOUT_SECS}s)"
+eval_snapshot_login_pids  # so cleanup only reaps logins this run started
 run_agent "$PROMPT" "$MODEL" "$TIMEOUT_SECS" "$PLUGIN_DIR" "$TRANSCRIPT" "$RESULTS_DIR/stderr.log"
 log "agent exited $AGENT_EXIT after ${AGENT_WALL_S}s"
 

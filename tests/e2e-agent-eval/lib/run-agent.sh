@@ -10,13 +10,25 @@
 log() { printf '[e2e-agent-eval] %s\n' "$*"; }
 fail() { printf '[e2e-agent-eval] FAIL: %s\n' "$*" >&2; }
 
-# Recursively kill a process and its children. A backgrounded `volcano login`
-# (device-code poll) or `volcano start` child otherwise outlives a plain
-# `timeout` on the parent and leaks, polling forever.
-kill_tree() {
-  local pid=$1 sig=$2 child
-  for child in $(pgrep -P "$pid" 2>/dev/null); do kill_tree "$child" "$sig"; done
-  kill "-$sig" "$pid" 2>/dev/null || true
+# Print a pid and all its descendants (depth-first). Used to snapshot the tree
+# at kill time: killing by the captured pids is reparent-safe, so a backgrounded
+# `volcano login` poller is still reaped after its `claude` parent exits (Claude
+# Code runs background tasks in their own process group, so a group-kill misses
+# them, but they remain descendants until the parent dies).
+_eval_descendant_pids() {
+  local pid=$1 child
+  for child in $(pgrep -P "$pid" 2>/dev/null); do echo "$child"; _eval_descendant_pids "$child"; done
+}
+
+# Machine-safe reap for the normal-exit case: record `volcano login` pids before
+# the run, kill only ones that appear during it. An unrelated login already
+# running in another terminal (in the snapshot) is left alone.
+eval_snapshot_login_pids() { EVAL_LOGIN_PIDS_BEFORE=" $(pgrep -f 'volcano login' 2>/dev/null | tr '\n' ' ')"; }
+eval_reap_new_logins() {
+  local pid
+  for pid in $(pgrep -f 'volcano login' 2>/dev/null); do
+    case "${EVAL_LOGIN_PIDS_BEFORE:- }" in *" $pid "*) ;; *) kill -KILL "$pid" 2>/dev/null ;; esac
+  done
 }
 
 # eval_preflight PLUGIN_DIR SCRIPT_DIR — validate the environment before spending
@@ -43,9 +55,32 @@ eval_preflight() {
     if (!m.name || !m.version) console.log(`${process.argv[1]} is missing "name"/"version"`);
   ' "$plugin_dir/.claude-plugin/plugin.json" 2>&1) || manifest_error="$plugin_dir/.claude-plugin/plugin.json not found or unreadable"
   [ -z "$manifest_error" ] || { fail "$manifest_error"; return 1; }
-  if [ ! -d "$script_dir/node_modules/@volcano.dev/sdk" ]; then
-    log "installing verification tooling deps (@volcano.dev/sdk)"
-    (cd "$script_dir" && npm install --silent) || { fail "npm install for verification tooling failed"; return 1; }
+  # Reconcile node_modules with package.json every run (npm is a no-op when
+  # already current) so a stale SDK version from a prior checkout can't linger
+  # and silently be used by the verifiers.
+  log "syncing verification tooling deps (npm install)"
+  (cd "$script_dir" && npm install --silent) || { fail "npm install for verification tooling failed"; return 1; }
+}
+
+# The CLI stores auth in ~/.volcano/config.json (no config-dir override exists;
+# os.UserHomeDir wins). Auth scenarios call volcano login/logout, which would
+# otherwise leave the developer's real session mutated. Snapshot it before the
+# run and restore it on exit so an eval never logs the developer out.
+eval_snapshot_cli_auth() {
+  EVAL_CLI_CONFIG="$HOME/.volcano/config.json"
+  EVAL_CLI_CONFIG_BACKUP=""
+  if [ -f "$EVAL_CLI_CONFIG" ]; then
+    EVAL_CLI_CONFIG_BACKUP="$(mktemp -t volcano-cli-config-XXXXXX)"
+    cp "$EVAL_CLI_CONFIG" "$EVAL_CLI_CONFIG_BACKUP"
+  fi
+}
+eval_restore_cli_auth() {
+  [ -n "${EVAL_CLI_CONFIG:-}" ] || return 0
+  if [ -n "${EVAL_CLI_CONFIG_BACKUP:-}" ] && [ -f "$EVAL_CLI_CONFIG_BACKUP" ]; then
+    mkdir -p "$(dirname "$EVAL_CLI_CONFIG")"
+    cp "$EVAL_CLI_CONFIG_BACKUP" "$EVAL_CLI_CONFIG"; rm -f "$EVAL_CLI_CONFIG_BACKUP"
+  else
+    rm -f "$EVAL_CLI_CONFIG"  # none before; drop whatever the eval created
   fi
 }
 
@@ -101,11 +136,19 @@ This is a non-interactive, single-turn evaluation session — no human is availa
   local start; start=$(date +%s)
   ( cd "$SANDBOX_DIR" && claude "${args[@]}" ) >"$transcript" 2>"$stderr" &
   local agent_pid=$!
-  # Watchdog: tree-kill at the timeout so backgrounded children die too.
-  ( sleep "$timeout_s"; kill_tree "$agent_pid" TERM; sleep 3; kill_tree "$agent_pid" KILL ) >/dev/null 2>&1 &
+  # Watchdog: at the timeout, snapshot the whole descendant tree (children are
+  # still attached), TERM it, then KILL the SAME pids after a grace period.
+  # Snapshotting first makes the KILL land even after the parent exits and
+  # reparents a slow-to-die child.
+  ( sleep "$timeout_s"
+    local pids; pids="$(_eval_descendant_pids "$agent_pid") $agent_pid"
+    for p in $pids; do kill -TERM "$p" 2>/dev/null; done
+    sleep 3
+    for p in $pids; do kill -KILL "$p" 2>/dev/null; done
+  ) >/dev/null 2>&1 &
   local watchdog_pid=$!
-  disown "$watchdog_pid" 2>/dev/null || true  # so reaping it doesn't print a job-control "Killed" line
-  wait "$agent_pid"; AGENT_EXIT=$?
-  kill_tree "$watchdog_pid" KILL >/dev/null 2>&1
+  disown "$watchdog_pid" 2>/dev/null || true
+  wait "$agent_pid" 2>/dev/null; AGENT_EXIT=$?
+  kill "$watchdog_pid" 2>/dev/null  # stop the watchdog if the agent finished first
   AGENT_WALL_S=$(( $(date +%s) - start ))
 }

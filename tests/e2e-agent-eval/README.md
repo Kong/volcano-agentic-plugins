@@ -38,8 +38,10 @@ Each run writes `results/<scenario>/<run-id>/`:
 - `report.md` — pass/fail + headline numbers.
 - `metrics.json` — friction signals from the transcript (`tool_calls`,
   `failed_tool_calls`, `help_invocations`, per-tool counts, …).
-- `verification.json` — the harness's own independent check (e.g. the invoke
-  round-trip, or the per-signal auth-flow breakdown).
+- an independent-verification artifact whose name is scenario-specific:
+  `verification.json` for `todo-api-local` (invoke round-trip) and `deploy-auth`
+  (per-signal auth-flow breakdown), and `cloud-functions-list.txt` for
+  `cloud-deploy` (the raw cloud-list the pass/fail is read from).
 - `transcript.jsonl` — the full agent session (stream-json) for manual reading.
 
 Exit code is `0` on pass, `1` on fail.

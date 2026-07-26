@@ -23,6 +23,10 @@ scenario_setup() {
   EVAL_PROJECT_ID=$(echo "$out" | grep -oE '[0-9a-f]{8}-[0-9a-f-]{27}' | head -1)
   volcano use "$EVAL_PROJECT" >/dev/null 2>&1 || { fail "volcano use $EVAL_PROJECT failed"; return 1; }
   (cd "$SANDBOX_DIR" && volcano init javascript >/dev/null 2>&1) || { fail "volcano init failed"; return 1; }
+  # The agent only needs the persisted CLI session (config.json), not the raw
+  # token. Drop it from the environment so it can't leak into the agent's tool
+  # output/transcript.
+  unset CLAUDE_EVAL_CLOUD_TOKEN CLOUD_TOKEN
 }
 
 scenario_teardown() {
@@ -32,11 +36,19 @@ scenario_teardown() {
 # Pass = the harness can see a deployed function in the run's cloud project
 # (independent of what the transcript claims). Uses cloud list, not the agent.
 scenario_verify() {
-  volcano use "$EVAL_PROJECT" >/dev/null 2>&1 || true
-  local list; list="$(volcano cloud functions list 2>&1)"
-  echo "$list" >"$RESULTS_DIR/cloud-functions-list.txt"
-  # A deployed function shows a UUID row; "No functions deployed" / 0 shown = none.
-  if echo "$list" | grep -qE '[0-9a-f]{8}-[0-9a-f]{4}-'; then PASS="true"; fi
+  # Only trust a UUID row if BOTH selecting the isolated eval project AND the
+  # cloud list succeed — otherwise we could inspect whichever project the agent
+  # left selected, or parse a UUID out of error output, and false-pass.
+  local list
+  if ! volcano use "$EVAL_PROJECT" >/dev/null 2>&1; then
+    echo "verify: could not select eval project $EVAL_PROJECT" >"$RESULTS_DIR/cloud-functions-list.txt"
+  elif list="$(volcano cloud functions list 2>&1)"; then
+    echo "$list" >"$RESULTS_DIR/cloud-functions-list.txt"
+    # A deployed function shows a UUID row; "No functions deployed" = none.
+    if echo "$list" | grep -qE '[0-9a-f]{8}-[0-9a-f]{4}-'; then PASS="true"; fi
+  else
+    echo "verify: cloud functions list failed: $list" >"$RESULTS_DIR/cloud-functions-list.txt"
+  fi
 
   {
     echo "# Result: $SCENARIO ($RUN_ID)"; echo
