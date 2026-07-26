@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@volcano.dev/sdk": "^1.4.0"
+    "@volcano.dev/sdk": "^1.4.1"
   }
 }
