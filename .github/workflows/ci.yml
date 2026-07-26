@@ -138,8 +138,13 @@ jobs:
     runs-on: ubuntu-latest
     # No ambient GITHUB_TOKEN use: auth is entirely via the App-minted token below.
     permissions: {}
+    # Share sync-skills.yml's concurrency group so this refresh serializes with
+    # an in-flight sync run instead of racing it: if a sync is mid-rebuild, this
+    # job queues behind it and then updates the branch it just pushed, rather
+    # than looking before the PR exists (or before its rebuild lands) and
+    # missing it.
     concurrency:
-      group: refresh-sync-pr
+      group: sync-skills
       cancel-in-progress: false
     steps:
       - name: Generate token
@@ -170,12 +175,20 @@ jobs:
             echo "No open volcano-skills sync PR; nothing to refresh."
             exit 0
           fi
-          # update-branch merges main into the branch. It no-ops when already
-          # current and 422s on conflict; swallow both. ponytail: on conflict we
-          # no-op here — sync-skills.yml force-rebuilds the branch on its next
-          # run, so a conflicted sync PR is no worse off than without this job.
-          gh api --method PUT "repos/$GITHUB_REPOSITORY/pulls/$pr_number/update-branch" \
-            || echo "update-branch no-op or conflict for #$pr_number; leaving as-is."
+          # update-branch merges main into the branch. Suppress only the
+          # expected 422 (branch already current, or a conflict — both benign
+          # no-ops here: sync-skills.yml force-rebuilds a conflicted branch on
+          # its next run). Any other failure — auth, mis-scoped token, rate
+          # limit, GitHub 5xx — must surface, or a permanently broken refresh
+          # would look green and silently leave the sync PR stuck.
+          if out="$(gh api --method PUT "repos/$GITHUB_REPOSITORY/pulls/$pr_number/update-branch" 2>&1)"; then
+            echo "Updated #$pr_number with main; validate will re-run and auto-merge will land it."
+          else
+            case "$out" in
+              *"HTTP 422"*) echo "update-branch no-op for #$pr_number (already current or conflict): $out" ;;
+              *) echo "::error::update-branch failed for #$pr_number: $out"; exit 1 ;;
+            esac
+          fi
 
   auto-fix-skill-drift:
     name: Auto-sync volcano-skills into failing PR
