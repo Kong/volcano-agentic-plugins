@@ -14,16 +14,19 @@ scenario_setup() { eval_reset_local_stack; }
 
 # Independent verification (harness-run): locate the Next.js app, confirm it
 # produced (or can produce) a production build, and check the local-API wiring.
-# Pass = the frontend builds with the SDK. env wiring is reported (a build can
-# succeed while pointed at the wrong API), so a false env is a visible finding
-# rather than a silent pass.
+# Pass requires BOTH: the frontend builds with the SDK AND .env.local is wired
+# to the local API (localhost:8000 + a non-empty anon key). A build can succeed
+# while pointed at the wrong API, so the env wiring is a hard pass criterion
+# (see line ~46), not just a reported signal.
 scenario_verify() {
-  local pkg app_dir build_ok="false" env_ok="false" build_note="no Next.js project found"
-  # Locate the project by the package.json that declares a "next" dependency —
-  # `volcano init nextjs` puts it at the project root with the app dir passed as
-  # an arg ("next build web"), so there's no next.config and no web/package.json.
+  local pkg app_dir build_ok="false" env_ok="false" build_note="no Next.js + Volcano SDK project found"
+  # Locate the project by the package.json that declares BOTH "next" and the
+  # Volcano SDK ("@volcano.dev/sdk") — a plain Next.js app is not the signal we
+  # want, it would build without ever exercising the SDK. `volcano init nextjs`
+  # puts package.json at the project root with the app dir passed as an arg
+  # ("next build web"), so there's no next.config and no web/package.json.
   pkg=$(find "$SANDBOX_DIR" -maxdepth 3 -name package.json -not -path '*/node_modules/*' 2>/dev/null | while read -r f; do
-    node -e 'const p=require(process.argv[1]);process.exit((p.dependencies&&p.dependencies.next)||(p.devDependencies&&p.devDependencies.next)?0:1)' "$f" 2>/dev/null && { echo "$f"; break; }
+    node -e 'const p=require(process.argv[1]);const d={...p.dependencies,...p.devDependencies};process.exit(d.next&&d["@volcano.dev/sdk"]?0:1)' "$f" 2>/dev/null && { echo "$f"; break; }
   done)
   app_dir=${pkg:+$(dirname "$pkg")}
 
@@ -38,8 +41,10 @@ scenario_verify() {
     local envf; envf=$(find "$app_dir" -maxdepth 2 -name '.env.local' -not -path '*/node_modules/*' -print -quit 2>/dev/null)
     if [ -n "$envf" ]; then
       cp "$envf" "$RESULTS_DIR/env.local.txt" 2>/dev/null || true
-      grep -qiE 'NEXT_PUBLIC_VOLCANO_API_URL=.*(localhost:8000|127\.0\.0\.1:8000)' "$envf" \
-        && grep -qi 'NEXT_PUBLIC_VOLCANO_ANON_KEY=' "$envf" && env_ok="true"
+      # Line-anchored (skip commented-out lines), case-sensitive names, and a
+      # non-empty value required — an empty/placeholder anon key must not pass.
+      grep -qE '^[[:space:]]*NEXT_PUBLIC_VOLCANO_API_URL=(https?://)?(localhost|127\.0\.0\.1):8000\b' "$envf" \
+        && grep -qE '^[[:space:]]*NEXT_PUBLIC_VOLCANO_ANON_KEY=[^[:space:]]' "$envf" && env_ok="true"
     fi
   fi
 
