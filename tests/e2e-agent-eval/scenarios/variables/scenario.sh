@@ -20,47 +20,62 @@ scenario_setup() { eval_reset_local_stack; }
 # Independent verification, two signals:
 #  1) SET CORRECTLY — the `variables` table (platform DB, plaintext value) has
 #     GREETING_PREFIX == the expected value. Proves the deploy step happened.
-#  2) CONSUMED PROPERLY — invoking the function with a random name returns the
-#     prefix + that name, proving the function read process.env.<VAR> at runtime.
+#  2) CONSUMED PROPERLY — overwrite the variable with an unguessable CHALLENGE
+#     value, then invoke with a random name and require the exact adjacent
+#     greeting `<challenge> <name>`. Local functions read variables live from the
+#     DB per invoke (localmode ListVariables — direct query, no cache), so only a
+#     genuine process.env read reflects the challenge; a hardcoded prefix returns
+#     the old literal and fails. Closes the hardcoded-prefix gap the random name
+#     alone can't.
 scenario_verify() {
   local status_out api_url anon_key
   status_out="$(cd "$SANDBOX_DIR" && volcano status 2>&1)"
   api_url=$(echo "$status_out" | grep "API URL:" | awk '{print $NF}')
   anon_key=$(echo "$status_out" | grep "Anon Key:" | awk '{print $NF}')
 
+  # Invoke the REQUIRED function name; fall back to discovery only if 'greet' is
+  # absent (so an extra alphabetically-earlier function can't misdirect the run).
   local fn=""
   if [ -d "$SANDBOX_DIR/volcano/functions" ]; then
-    fn=$(find "$SANDBOX_DIR/volcano/functions" -mindepth 1 -maxdepth 1 -not -name '_*' -exec basename {} \; | sed 's/\.[^.]*$//' | sort -u | head -1)
+    if find "$SANDBOX_DIR/volcano/functions" -mindepth 1 -maxdepth 1 \( -name 'greet' -o -name 'greet.*' \) 2>/dev/null | grep -q .; then
+      fn="greet"
+    else
+      fn=$(find "$SANDBOX_DIR/volcano/functions" -mindepth 1 -maxdepth 1 -not -name '_*' -exec basename {} \; | sed 's/\.[^.]*$//' | sort -u | head -1)
+    fi
   fi
 
-  # 1) Variable set correctly? The variables table lives in the platform DB
-  #    (values stored in the clear); fall back to `app` if the layout differs.
-  local db_val="" var_set="false" q="SELECT value FROM variables WHERE name='${EXPECTED_VAR}' LIMIT 1;"
+  # 1) Set correctly? Read the value BEFORE the challenge overwrite. The variables
+  #    table lives in the platform DB (values in the clear); fall back to `app`.
+  local db_name="volcano" db_val="" var_set="false" q="SELECT value FROM variables WHERE name='${EXPECTED_VAR}' LIMIT 1;"
   db_val=$(docker exec volcano-postgres psql -U volcano -d volcano -tAc "$q" 2>/dev/null | head -1)
-  [ -n "$db_val" ] || db_val=$(docker exec volcano-postgres psql -U volcano -d app -tAc "$q" 2>/dev/null | head -1)
+  if [ -z "$db_val" ]; then db_name="app"; db_val=$(docker exec volcano-postgres psql -U volcano -d app -tAc "$q" 2>/dev/null | head -1); fi
   [ "$db_val" = "$EXPECTED_PREFIX" ] && var_set="true"
 
-  # 2) Consumed at runtime? Random name defeats a hardcoded response.
-  local rand="Ada-$RANDOM$RANDOM"
-  local out="{\"invoked\":false,\"consumed\":false,\"error\":\"no api url/anon key\"}"
-  if [ -n "$api_url" ] && [ -n "$anon_key" ]; then
-    out=$(node "$SCRIPT_DIR/verify-variables.mjs" "$api_url" "$anon_key" "$fn" "$EXPECTED_PREFIX" "$rand" 2>"$RESULTS_DIR/verify-variables.stderr.log")
+  # 2) Consumed? Overwrite with an unguessable challenge, then invoke.
+  local challenge="challenge-${RANDOM}${RANDOM}-volcano" rand="Ada-${RANDOM}${RANDOM}" updated="false"
+  if [ -n "$db_val" ]; then
+    docker exec volcano-postgres psql -U volcano -d "$db_name" -c "UPDATE variables SET value='${challenge}' WHERE name='${EXPECTED_VAR}';" >/dev/null 2>&1 && updated="true"
+  fi
+
+  local out="{\"invoked\":false,\"consumed\":false,\"error\":\"precondition not met (variable missing or no api url)\"}"
+  if [ "$updated" = "true" ] && [ -n "$api_url" ] && [ -n "$anon_key" ]; then
+    out=$(node "$SCRIPT_DIR/verify-variables.mjs" "$api_url" "$anon_key" "$fn" "$challenge" "$rand" 2>"$RESULTS_DIR/verify-variables.stderr.log")
     [ -n "$out" ] || out="{\"invoked\":false,\"consumed\":false,\"error\":\"verifier produced no output\"}"
   fi
   echo "$out" >"$RESULTS_DIR/variables-result.json"
 
-  # Pass = variable set correctly AND consumed at runtime (invoke 2xx + prefix+name in reply).
+  # Pass = variable set correctly AND consumed at runtime (2xx invoke reflecting the challenge).
   local consumed_ok
   consumed_ok=$(echo "$out" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const r=JSON.parse(s);const ok=r.invoke_status>=200&&r.invoke_status<300;process.stdout.write((ok&&r.consumed)?"true":"false")}catch{process.stdout.write("false")}})')
   { [ "$var_set" = "true" ] && [ "$consumed_ok" = "true" ]; } && PASS="true"
 
   {
     echo "# Result: $SCENARIO ($RUN_ID)"; echo
-    echo "**Pass:** $PASS  (variable set correctly in the platform AND consumed by the function at runtime)"
+    echo "**Pass:** $PASS  (variable set correctly in the platform AND read at runtime via a challenge overwrite)"
     echo "**Agent exit code:** $AGENT_EXIT"; echo "**Agent wall time:** ${AGENT_WALL_S}s"
     echo "**Function:** ${fn:-<none>}"
-    echo "**${EXPECTED_VAR} in variables table:** ${db_val:-<unset>} (set_correctly: $var_set)"
-    echo "**Runtime:** $out"
+    echo "**${EXPECTED_VAR} in variables table:** ${db_val:-<unset>} (set_correctly: $var_set, challenge_applied: $updated)"
+    echo "**Runtime (challenge=$challenge):** $out"
     echo; echo "See \`variables-result.json\`, \`verify-variables.stderr.log\`, and \`metrics.json\`."
   } >"$RESULTS_DIR/report.md"
 }
