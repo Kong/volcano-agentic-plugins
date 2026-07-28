@@ -72,7 +72,7 @@ Exit code is `0` on pass, `1` on fail.
 | `CLAUDE_EVAL_CLOUD_API_URL` | `http://localhost:8000` | hosting URL for cloud scenarios |
 | `CLAUDE_EVAL_CLOUD_TOKEN` | local-dev token | platform token for `cloud-deploy` |
 | `VOLCANO_IMAGE` | CLI default | server image the local stack runs (`volcano start`); must exist locally |
-| `VOLCANO_API_URL` | compiled default | override the API URL the CLI/agent/verifier target (see [`RUNNING.md`](./RUNNING.md)) |
+| `VOLCANO_API_URL` | compiled default | override the API URL the CLI/agent/verifier target (cloud scenarios override it from `CLAUDE_EVAL_CLOUD_API_URL`; see [`RUNNING.md`](./RUNNING.md)) |
 
 ## The workflow (for agents optimizing the skills)
 

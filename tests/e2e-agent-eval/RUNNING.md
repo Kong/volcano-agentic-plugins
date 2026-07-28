@@ -65,6 +65,9 @@ For a specific PR:
 cd /tmp/vh
 git fetch origin pull/<N>/head && git checkout FETCH_HEAD
 DOCKER_BUILDKIT=1 docker build -t volcano-local:pr<N> .
+
+# run against it
+cd /path/to/volcano-agentic-plugins/tests/e2e-agent-eval
 VOLCANO_IMAGE=volcano-local:pr<N> ./run.sh <scenario>
 ```
 
@@ -87,6 +90,11 @@ export VOLCANO_API_URL=http://localhost:8000
 
 Precedence: `VOLCANO_API_URL` env > runtime override > compiled default.
 
+**Cloud-scenario exception:** `deploy-auth` and `cloud-deploy` overwrite
+`VOLCANO_API_URL` in their setup from `CLAUDE_EVAL_CLOUD_API_URL` (default
+`localhost:8000`), so exporting it here does **not** control those two runs — set
+`CLAUDE_EVAL_CLOUD_API_URL` for them instead.
+
 ## Test against an already-running hosting server
 
 Have a server already up at `localhost:8000` (e.g. a build from a PR you're
@@ -98,7 +106,7 @@ export VOLCANO_API_URL=http://localhost:8000        # override the staging defau
 VOLCANO_IMAGE=<the running image tag> ./run.sh <scenario>
 ```
 
-Why `VOLCANO_IMAGE` is still needed: each scenario's setup runs
+Why `VOLCANO_IMAGE` is still needed: each local scenario's setup runs
 `eval_reset_local_stack` (`volcano start` → `reset` → `stop`) for isolation, so
 local scenarios rebuild a **clean** stack from `VOLCANO_IMAGE` each time. Point it
 at the tag the server is running (check with
