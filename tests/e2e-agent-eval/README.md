@@ -19,17 +19,31 @@ Preflight requires `volcano`, `claude`, `docker`, `node` (>=20) on `PATH`, Docke
 running, and a valid plugin manifest. Verifier deps (`@volcano.dev/sdk`) install
 automatically on first run.
 
+> **Operational setup** — how to pick the server image (`VOLCANO_IMAGE`), build a
+> fresh image from a branch/PR, point the CLI at a specific API (`VOLCANO_API_URL`),
+> or run against an already-running hosting server: see
+> **[`RUNNING.md`](./RUNNING.md)**.
+
 ### Scenarios
 
-| Scenario | What it checks | Precondition |
-|----------|----------------|--------------|
-| `todo-api-local` | bare "build a todo app" → auto local deploy → authenticated invoke round-trip | local Docker stack (`volcano start`) |
-| `deploy-auth` | unauth "deploy to cloud" → detect auth need → **background** `volcano login` + float the device code | a hosting server at `$CLAUDE_EVAL_CLOUD_API_URL` serving the device-auth flow |
-| `cloud-deploy` | authenticated + authorized "deploy to cloud" → project context → confirm → deploy → verify | hosting at `$CLAUDE_EVAL_CLOUD_API_URL` accepting `$CLAUDE_EVAL_CLOUD_TOKEN` |
+| Scenario | What it checks |
+|----------|----------------|
+| `todo-api-local` | bare "build a todo app" → auto local deploy → authenticated invoke round-trip |
+| `storage-local` | file upload+list app → auto local deploy → storage round-trip |
+| `relational-db` | blog (posts + comments) → foreign-key relationship + query-by-FK round-trip |
+| `variables` | function that consumes a project variable → variable set correctly + read at runtime |
+| `scheduled-function` | cron-scheduled function that writes to the DB → schedule registers + fires |
+| `function-generator` | QR-code generator function (npm-bundled + binary) that stores to a bucket |
+| `nextjs-local` | Next.js auth + todo web app → frontend compiles with the SDK + wired to the local API |
+| `oauth-login` | Google OAuth sign-in web app → provider configured + app builds + authorize redirect |
+| `realtime-local` | live chat app → realtime enablement + postgres-changes delivery round-trip |
+| `deploy-auth` | unauth "deploy to cloud" → detect auth need → **background** `volcano login` + float the device code |
+| `cloud-deploy` | authenticated + authorized "deploy to cloud" → project context → confirm → deploy → verify |
 
-The cloud scenarios point at a local hosting server by default
-(`http://localhost:8000`, e.g. a `make dev` instance); set the env vars below to
-target a real cloud.
+Local scenarios use the local Docker stack (`volcano start`). The two cloud
+scenarios point at a local hosting server by default (`http://localhost:8000`,
+e.g. a `make dev` instance); set the env vars below to target a real cloud. See
+[`RUNNING.md`](./RUNNING.md) for choosing the server image and API URL.
 
 ### Output
 
@@ -57,6 +71,8 @@ Exit code is `0` on pass, `1` on fail.
 | `CLAUDE_EVAL_MAX_BUDGET_USD` | unset | cap agent spend |
 | `CLAUDE_EVAL_CLOUD_API_URL` | `http://localhost:8000` | hosting URL for cloud scenarios |
 | `CLAUDE_EVAL_CLOUD_TOKEN` | local-dev token | platform token for `cloud-deploy` |
+| `VOLCANO_IMAGE` | CLI default | server image the local stack runs (`volcano start`); must exist locally |
+| `VOLCANO_API_URL` | compiled default | override the API URL the CLI/agent/verifier target (see [`RUNNING.md`](./RUNNING.md)) |
 
 ## The workflow (for agents optimizing the skills)
 
