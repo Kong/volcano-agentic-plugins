@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.18](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.17...v0.2.18) (2026-07-30)
+
+
+### Bug Fixes
+
+* **plugins:** repoint install-volcano localhost fallback off removed nightly CLI channel ([#87](https://github.com/Kong/volcano-agentic-plugins/issues/87)) ([83a51ec](https://github.com/Kong/volcano-agentic-plugins/commit/83a51ece7704765758c5da37913fefa9e2209eb6))
+
 ## [0.2.17](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.16...v0.2.17) (2026-07-28)
 
 
