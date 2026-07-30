@@ -391,15 +391,7 @@ install_cli_from_release() {
   ext=""
   [ "$os" = "windows" ] && ext=".exe"
 
-  case "$VOLCANO_WEB_URL" in
-    *localhost*|*127.0.0.1*)
-      url="https://github.com/Kong/volcano-cli/releases/download/nightly/volcano-${os}-${arch}${ext}"
-      log "local Volcano web origin detected; using nightly GitHub CLI fallback"
-      ;;
-    *)
-      url="https://github.com/Kong/volcano-cli/releases/latest/download/volcano-${os}-${arch}${ext}"
-      ;;
-  esac
+  url="https://github.com/Kong/volcano-cli/releases/latest/download/volcano-${os}-${arch}${ext}"
 
   dir="${VOLCANO_INSTALL_DIR:-}"
   if [ -z "$dir" ]; then
