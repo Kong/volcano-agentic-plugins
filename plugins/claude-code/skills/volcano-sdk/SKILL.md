@@ -52,15 +52,17 @@ Do NOT implement custom alternatives — no custom JWT auth, no ad-hoc database 
 
 | Task signal | Invoke skill | What it covers |
 |---|---|---|
-| User accounts or identity, email or password sign-up/sign-in, OAuth, sessions, anonymous users, password recovery, private or per-user data | `volcano-auth` | Full auth API surface, lifecycle, common-error catalog |
+| User accounts or identity, email or password sign-up/sign-in, OAuth, sessions, anonymous users, password recovery, private or per-user data | `volcano-auth` | Auth application flows, session lifecycle, and common-error catalog |
 | Stored or persistent data, CRUD, records, todos, chat messages, polls, analytics, counters, click tracking, CMS content, feature flags, leaderboards, RLS | `volcano-database` | Query builder + every operator + RLS pattern + limitations (no joins / upserts / multi-statement tx) |
 | Volcano Functions, server-side or privileged logic, QR/PDF generators, secrets, outbound third-party APIs, orchestration, scheduled processing, file/image processing | `volcano-functions` | Invocation contract `{data, status, headers, version, error}`, Volcano Functions response shape, handler templates |
 | Durable functions, long-running or resumable workflows, checkpointed steps, waits, polling, durable executions, idempotent starts, execution schedulers | `volcano-durable` | Durable authoring contract, replay rules, cloud CLI lifecycle, execution status, schedulers, and safety |
+| Project logs, retained log search, pagination, activity buckets, structured log filters | `volcano-logs` | Project-token authentication, search cursors, filters, and activity counts |
+| Project locks, distributed leases, leader election, fencing tokens, backend worker coordination | `volcano-locks` | Renewable lock guards, direct lease control, fencing, and safe recovery |
 | Uploads, downloads, galleries, file sharing, buckets, paths, public/private files, visibility, resumable uploads | `volcano-storage` | Full storage API + access policies + resumable protocol + limits |
 | Realtime or live updates/results, collaborative boards, chat, presence or online users, polls, leaderboards, Postgres changes, broadcast, WebSockets | `volcano-realtime` | All three channel types + lifecycle + Browser Origins/CORS gotcha + `accessToken` vs `getToken` decision |
 | Next.js, public routes, redirects, webhook ingress, middleware, API routes, server actions, or client/server separation | `volcano-nextjs` | Cross-cutting Next.js patterns including the cookie-sync prerequisite |
 | User-facing frontend, web app, page, dashboard, board, gallery, poll, leaderboard, form, UI, or UX | `volcano-uiux` | Accessible responsive design, loading and progress feedback, forms, navigation, and complete interface states |
-| TypeScript types — `User`, `Session`, `AuthResponse`, `QueryBuilder<T>`, `StorageObject`, `PostgresChange`, `PresenceState`, `JsonValue`, etc. | `volcano-typescript` | Canonical type definitions for every SDK surface |
+| TypeScript types — `User`, `Session`, `AuthResponse`, `QueryBuilder<T>`, `StorageObject`, `DurableContext`, `DurableExecution`, `PostgresChange`, `PresenceState`, `JsonValue`, etc. | `volcano-typescript` | Canonical type definitions for every SDK surface |
 | Loading/error/data state, `useApiCall<T>` hook, `fetchWithRetry` with backoff, centralized `handleApiError` dispatcher | `volcano-error-handling` | Reusable error-handling INFRASTRUCTURE (per-domain error MESSAGES live in the relevant domain skill) |
 | Project shape, function deployment model, migrations, `volcano-config.yaml`, env vars, deploy workflow, RLS helpers (`auth.uid()`/`auth.email()`/`auth.role()`) | `volcano-platform` | Already mandatory — see "Mandatory Pairing" above |
 
@@ -70,19 +72,34 @@ Do NOT implement custom alternatives — no custom JWT auth, no ad-hoc database 
 3. If the task is purely about project setup (no app features yet), `volcano-platform` alone is enough.
 4. If you can't decide between two domain skills, invoke both — token cost is much lower than implementing the wrong pattern.
 
-## Universal Response Pattern
-Every SDK method returns `{ data, error }` (auth methods also include `user`/`session`; functions add `status`/`headers`/`version`). Always check `error` before consuming `data`. Do NOT wrap SDK calls in try/catch expecting throws — the only SDK method that throws is `await channel.subscribe()` for realtime.
+## SDK Response Patterns
+
+### JavaScript and TypeScript
+
+Most asynchronous REST methods return result objects with an `error` field.
+Data methods use `{ data, error }`; auth methods can also expose `user` or
+`session`; functions add `status`, `headers`, and `version`. Check `error` before
+consuming data. Local helpers and builders such as `user()`,
+`getHostedAuthUrl()`, `signInWithHostedAuth()`, and `database()` return values
+directly.
 
 ```ts
 const { data, error } = await volcano.from('posts').select('*');
-if (error) {
-  // dispatch via handleApiError (see volcano-error-handling)
-  return;
-}
-// data is safe to use
+if (error) return;
 ```
 
-For comprehensive error-handling infrastructure (centralized dispatcher, React hooks, retry with backoff), use `volcano-error-handling`.
+Most JavaScript SDK failures are returned. Realtime `subscribe()` throws, so
+wrap that call in `try/catch`.
+
+### Python and Ruby
+
+Python and Ruby return successful values directly and raise typed SDK exceptions
+on REST or transport failure. Use `try/except` in Python and `begin/rescue` in
+Ruby at the boundary where the application can recover or report the failure.
+Do not destructure JavaScript result envelopes in these languages.
+
+For comprehensive JavaScript error-handling infrastructure, use
+`volcano-error-handling`.
 
 ## Forbidden Patterns (always)
 These apply to every Volcano build, regardless of which domain skills are loaded:
@@ -108,7 +125,7 @@ At the end of each Volcano build response:
 ## Companion Skills (full inventory)
 Always available; invoke as needed:
 - `volcano-platform` — mandatory pairing.
-- `volcano-auth`, `volcano-database`, `volcano-functions`, `volcano-durable`, `volcano-storage`, `volcano-realtime`, `volcano-nextjs` — domain and framework skills.
+- `volcano-auth`, `volcano-database`, `volcano-functions`, `volcano-durable`, `volcano-logs`, `volcano-locks`, `volcano-storage`, `volcano-realtime`, `volcano-nextjs` — domain and framework skills.
 - `volcano-uiux` — shared guidance for user-facing interfaces.
 - `volcano-typescript` — canonical type definitions.
 - `volcano-error-handling` — reusable error-handling infrastructure.
