@@ -33,6 +33,7 @@ automatically on first run.
 | `relational-db` | blog (posts + comments) → foreign-key relationship + query-by-FK round-trip |
 | `variables` | function that consumes a project variable → variable set correctly + read at runtime |
 | `scheduled-function` | cron-scheduled function that writes to the DB → schedule registers + fires |
+| `durable-function` | cloud durable function → checkpointed steps + fresh execution result |
 | `function-generator` | QR-code generator function (npm-bundled + binary) that stores to a bucket |
 | `nextjs-local` | Next.js auth + todo web app → frontend compiles with the SDK + wired to the local API |
 | `oauth-login` | Google OAuth sign-in web app → provider configured + app builds + authorize redirect |
@@ -40,9 +41,10 @@ automatically on first run.
 | `deploy-auth` | unauth "deploy to cloud" → detect auth need → **background** `volcano login` + float the device code |
 | `cloud-deploy` | authenticated + authorized "deploy to cloud" → project context → confirm → deploy → verify |
 
-Local scenarios use the local Docker stack (`volcano start`). The two cloud
-scenarios point at a local hosting server by default (`http://localhost:8000`,
-e.g. a `make dev` instance); set the env vars below to target a real cloud. See
+Local scenarios use the local Docker stack (`volcano start`). Cloud scenarios
+(`deploy-auth`, `cloud-deploy`, `durable-function`) point at a hosting server by
+default (`http://localhost:8000`). `durable-function` needs a server with durable
+execution support. Set the env vars below to target a cloud server. See
 [`RUNNING.md`](./RUNNING.md) for choosing the server image and API URL.
 
 ### Output

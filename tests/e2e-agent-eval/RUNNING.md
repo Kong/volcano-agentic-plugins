@@ -90,10 +90,9 @@ export VOLCANO_API_URL=http://localhost:8000
 
 Precedence: `VOLCANO_API_URL` env > runtime override > compiled default.
 
-**Cloud-scenario exception:** `deploy-auth` and `cloud-deploy` overwrite
-`VOLCANO_API_URL` in their setup from `CLAUDE_EVAL_CLOUD_API_URL` (default
-`localhost:8000`), so exporting it here does **not** control those two runs — set
-`CLAUDE_EVAL_CLOUD_API_URL` for them instead.
+**Cloud-scenario exception:** `deploy-auth`, `cloud-deploy`, and `durable-function`
+overwrite `VOLCANO_API_URL` in their setup from `CLAUDE_EVAL_CLOUD_API_URL`
+(default `localhost:8000`). Set `CLAUDE_EVAL_CLOUD_API_URL` for these runs.
 
 ## Test against an already-running hosting server
 
@@ -111,10 +110,10 @@ Why `VOLCANO_IMAGE` is still needed: each local scenario's setup runs
 local scenarios rebuild a **clean** stack from `VOLCANO_IMAGE` each time. Point it
 at the tag the server is running (check with
 `docker inspect volcano-server --format '{{.Config.Image}}'`) to keep testing that
-build. The two cloud scenarios already self-set `VOLCANO_API_URL` from
+build. Cloud scenarios self-set `VOLCANO_API_URL` from
 `CLAUDE_EVAL_CLOUD_API_URL` (default `localhost:8000`).
 
-## Cloud scenarios (`deploy-auth`, `cloud-deploy`)
+## Cloud scenarios (`deploy-auth`, `cloud-deploy`, `durable-function`)
 
 - **`deploy-auth`** is transcript-based: it checks the agent detects the unauth
   state (via `volcano projects list`), backgrounds `volcano login`, and floats the
@@ -122,6 +121,9 @@ build. The two cloud scenarios already self-set `VOLCANO_API_URL` from
 - **`cloud-deploy`** authenticates non-interactively with `--token`
   (`$CLAUDE_EVAL_CLOUD_TOKEN`, default the local-dev platform token), creates an
   isolated project, deploys, and verifies via `volcano cloud functions list`.
+- **`durable-function`** uses the same isolated cloud-project setup and needs a
+  hosting server with durable execution support. It starts a fresh execution and
+  checks the returned value after the function is active.
 
 Set `CLAUDE_EVAL_CLOUD_API_URL` / `CLAUDE_EVAL_CLOUD_TOKEN` to target real cloud
 instead of the local server.
