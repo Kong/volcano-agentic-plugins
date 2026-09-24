@@ -10,10 +10,9 @@ mkdir -p "$SANDBOX_DIR/volcano/functions/double-number"
 printf '%s\n' 'await ctx.step("double", fn); await ctx.step("add", fn);' >"$SANDBOX_DIR/volcano/functions/double-number/index.js"
 volcano() {
   case "$*" in
-    "use $EVAL_PROJECT") return 0 ;;
-    'cloud durable get double-number') printf 'Status: active\n' ;;
-    'cloud durable start double-number --input '* ) printf 'ID: 11111111-1111-4111-8111-111111111111\n' ;;
-    'cloud durable executions get double-number '* ) printf 'Status: succeeded\nResult: {\n  "value": %s\n}\n' "$EXPECTED" ;;
+    'durable get double-number') printf 'Status: active\n' ;;
+    'durable start double-number --input '* ) printf 'ID: 11111111-1111-4111-8111-111111111111\n' ;;
+    'durable executions get double-number '* ) printf 'Status: succeeded\nResult: {\n  "value": %s\n}\n' "$EXPECTED" ;;
     *) return 1 ;;
   esac
 }
