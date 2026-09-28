@@ -92,8 +92,7 @@ Precedence: `VOLCANO_API_URL` env > runtime override > compiled default.
 
 **Cloud-scenario exception:** `deploy-auth` and `cloud-deploy` overwrite
 `VOLCANO_API_URL` in their setup from `CLAUDE_EVAL_CLOUD_API_URL` (default
-`localhost:8000`), so exporting it here does **not** control those two runs — set
-`CLAUDE_EVAL_CLOUD_API_URL` for them instead.
+`localhost:8000`). Set `CLAUDE_EVAL_CLOUD_API_URL` for these runs.
 
 ## Test against an already-running hosting server
 
@@ -111,7 +110,7 @@ Why `VOLCANO_IMAGE` is still needed: each local scenario's setup runs
 local scenarios rebuild a **clean** stack from `VOLCANO_IMAGE` each time. Point it
 at the tag the server is running (check with
 `docker inspect volcano-server --format '{{.Config.Image}}'`) to keep testing that
-build. The two cloud scenarios already self-set `VOLCANO_API_URL` from
+build. Cloud scenarios self-set `VOLCANO_API_URL` from
 `CLAUDE_EVAL_CLOUD_API_URL` (default `localhost:8000`).
 
 ## Cloud scenarios (`deploy-auth`, `cloud-deploy`)
