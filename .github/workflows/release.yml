@@ -16,11 +16,10 @@ permissions:
 
 jobs:
   package:
+    # Builds and validates with the read-only workflow token. Publishing is a
+    # separate job so dependency installs and package scripts never run with
+    # contents: write.
     runs-on: ubuntu-latest
-    # contents: write is needed only to create/update the GitHub Release and
-    # upload its assets (softprops/action-gh-release).
-    permissions:
-      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -80,6 +79,20 @@ jobs:
         with:
           name: volcano-plugin-artifacts
           path: dist/release/*
+
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    # The only job with write access. It runs no repository code: it downloads
+    # the packaged assets and creates/updates the GitHub Release.
+    permissions:
+      contents: write
+    steps:
+      - name: Download workflow artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: volcano-plugin-artifacts
+          path: dist/release
 
       - name: Resolve release tag
         id: release_tag
