@@ -115,6 +115,9 @@ jobs:
           tag_name: ${{ steps.release_tag.outputs.tag }}
           name: ${{ steps.release_tag.outputs.tag }}
           generate_release_notes: true
+          # The assets arrive from the package job as an artifact; fail rather
+          # than publish a release without them if the paths ever drift.
+          fail_on_unmatched_files: true
           files: |
             dist/release/volcano-vscode.vsix
             dist/release/volcano-claude-desktop.mcpb
