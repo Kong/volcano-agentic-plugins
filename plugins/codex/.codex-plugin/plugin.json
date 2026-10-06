@@ -1,9 +1,9 @@
 {
   "name": "volcano",
   "version": "0.2.23",
-  "description": "Volcano agent skills and CLI for building and deploying apps and AI agents on Volcano from Codex. Work with functions, databases, storage, realtime, and auth through the Volcano SDK, and deploy straight from your editor.",
+  "description": "Volcano skills for building, testing, and deploying apps and AI agents with the Volcano CLI and SDK.",
   "author": {
-    "name": "Volcano",
+    "name": "Kong",
     "email": "support@volcano.dev",
     "url": "https://volcano.dev"
   },
@@ -20,17 +20,30 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Volcano",
-    "shortDescription": "Build and deploy apps and AI agents on Volcano.",
-    "longDescription": "Volcano for Codex provides canonical Volcano platform skills and CLI-first workflows, including install-volcano for installing or upgrading the Volcano CLI.",
-    "developerName": "Volcano",
-    "category": "Engineering",
+    "shortDescription": "Build apps with Volcano",
+    "longDescription": "Build, test, and deploy apps and AI agents on Volcano with 15 skills covering CLI setup, project scaffolding, Next.js, functions, databases, authentication, storage, realtime, durable workflows, logs, locks, error handling, TypeScript, and UI design. For developers using an agent environment with terminal access and the separately installed Volcano CLI. Cloud operations require a Volcano account. This skills-only plugin does not include an MCP server.",
+    "developerName": "Kong",
+    "category": "Developer Tools",
     "capabilities": [
       "Read",
       "Write"
     ],
-    "websiteURL": "https://volcano.dev",
+    "websiteURL": "https://volcano.dev/",
     "brandColor": "#F37A58",
     "screenshots": [],
-    "logo": "./assets/volcano_256.png"
+    "logo": "./assets/volcano_256.png",
+    "composerIcon": "./assets/volcano_256.png",
+    "defaultPrompt": "Help me build an app with Volcano.",
+    "supportURL": "https://docs.volcano.dev/sdk/js#getting-help",
+    "privacyPolicyURL": "https://volcano.dev/legal/privacy",
+    "termsOfServiceURL": "https://volcano.dev/legal/customer-agreement"
+  },
+  "review": {
+    "commerce": false,
+    "commerce_description": "The plugin does not sell products, process payments, or perform purchases. The separate Volcano platform offers a free tier and optional paid upgrades, including the Pro tier (currently displayed as SUPERAGENT on the public pricing page), purchased on the Volcano website outside this plugin."
+  },
+  "publication": {
+    "release_notes": "Initial public release of 15 Volcano workflows based on upstream skill bundle 0.2.23. CLI setup verifies the official npm package, pins an exact version, and checks integrity metadata. Existing installations are reused without implicit upgrades. Remote shell bootstrap execution is removed. Includes portable metadata and Codex compatibility. Requires terminal access and the separate Volcano CLI; no MCP server is included.",
+    "countries": []
   }
 }
