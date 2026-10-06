@@ -1,6 +1,6 @@
 {
   "name": "volcano",
-  "version": "0.2.25",
+  "version": "0.2.26",
   "description": "Volcano skills for building, testing, and deploying apps and AI agents with the Volcano CLI and SDK.",
   "author": {
     "name": "Kong",
