@@ -35,7 +35,8 @@ test("passes shell metacharacters to the child as literal arguments", async () =
 test("treats the binary as a path, never as a shell command line", async () => {
   const marker = path.join(scratch, "binary-injected");
 
-  const result = await runCli(["--version"], { binary: `true; touch ${marker}` });
+  // The trailing comment keeps a shell from handing `--version` to touch.
+  const result = await runCli(["--version"], { binary: `true; touch ${marker} #` });
 
   assert.equal(result.spawnError?.code, "ENOENT");
   assert.equal(result.code, null);
