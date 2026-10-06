@@ -54,6 +54,12 @@ jobs:
       - name: Check marketplace assets and metadata
         run: pnpm check:marketplace-assets
 
+      - name: Check public package isolation
+        run: pnpm check:codex-package
+
+      - name: Package public Codex plugin
+        run: pnpm package:codex
+
       - name: Typecheck
         run: pnpm -r typecheck
 
@@ -194,7 +200,9 @@ jobs:
   auto-fix-skill-drift:
     name: Auto-sync volcano-skills into failing PR
     needs: validate
-    if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    # Draft PRs may intentionally pin an unmerged canonical skills change.
+    # Do not overwrite that dependency with the current upstream main.
+    if: failure() && github.event_name == 'pull_request' && !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     # No ambient GITHUB_TOKEN use: auth is entirely via the App-minted token below.
     permissions: {}
