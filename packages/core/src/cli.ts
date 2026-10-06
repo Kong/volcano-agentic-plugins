@@ -11,8 +11,14 @@ export interface RunCliOptions {
   cwd?: string;
   /** Extra env merged over process.env (e.g. VOLCANO_API_URL for dev). */
   env?: Record<string, string | undefined>;
-  /** Kill the process after this many ms. */
+  /**
+   * Send SIGTERM after this many ms, then SIGKILL `killGraceMs` later. If the
+   * output pipes are still open `killGraceMs` after that (a descendant inherited
+   * them), resolve with the output captured so far instead of waiting.
+   */
   timeoutMs?: number;
+  /** Delay between the timeout's escalation steps. Defaults to 2000 ms. */
+  killGraceMs?: number;
   /** stdin to write, if any. */
   input?: string;
 }
@@ -27,6 +33,7 @@ export interface CliResult {
 }
 
 export const DEFAULT_CLI_BINARY = "volcano";
+const DEFAULT_KILL_GRACE_MS = 2000;
 
 /**
  * Run `volcano <args>` and resolve with captured output. Never rejects for a
@@ -64,8 +71,20 @@ export function runCli(
     };
 
     if (opts.timeoutMs && opts.timeoutMs > 0) {
+      const grace = opts.killGraceMs ?? DEFAULT_KILL_GRACE_MS;
       timer = setTimeout(() => {
         child.kill("SIGTERM");
+        // A child that ignores or traps SIGTERM would otherwise keep the promise pending forever.
+        timer = setTimeout(() => {
+          child.kill("SIGKILL");
+          // "close" waits for every holder of the output pipes, including
+          // descendants that outlive the child, so stop waiting for them.
+          timer = setTimeout(() => {
+            child.stdout?.destroy();
+            child.stderr?.destroy();
+            finish({ code: child.exitCode, signal: child.signalCode, stdout, stderr });
+          }, grace);
+        }, grace);
       }, opts.timeoutMs);
     }
 
@@ -80,6 +99,10 @@ export function runCli(
       finish({ code, signal, stdout, stderr });
     });
 
+    // A child that exits without reading all of its input makes the write fail
+    // with EPIPE; without a listener that error would crash the host process.
+    // The exit code and output already report what happened.
+    child.stdin?.on("error", () => {});
     if (opts.input !== undefined) {
       child.stdin?.end(opts.input);
     }
