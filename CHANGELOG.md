@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.24](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.23...v0.2.24) (2026-10-06)
+
+
+### Bug Fixes
+
+* **codex:** sync public submission metadata and verified CLI setup ([#102](https://github.com/Kong/volcano-agentic-plugins/issues/102)) ([99e8c23](https://github.com/Kong/volcano-agentic-plugins/commit/99e8c2329675e722eda35835d9869e42fa9d0d0d))
+* **skills:** sync volcano-skills submodule to 6b57883 ([#103](https://github.com/Kong/volcano-agentic-plugins/issues/103)) ([40dd27c](https://github.com/Kong/volcano-agentic-plugins/commit/40dd27c00b87a42119addb8630db7a69d35838b6))
+
 ## [0.2.23](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.22...v0.2.23) (2026-10-05)
 
 
