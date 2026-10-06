@@ -54,6 +54,9 @@ jobs:
       - name: Check marketplace assets and metadata
         run: pnpm check:marketplace-assets
 
+      - name: Check public package isolation
+        run: pnpm check:codex-package
+
       - name: Package public Codex plugin
         run: pnpm package:codex
 

@@ -84,3 +84,10 @@ validate, generate the ZIP, and upload it to the existing public plugin entry.
 Publishing on GitHub does not itself upload or publish the OpenAI listing.
 The countries list is deliberately empty for all available countries/regions;
 commerce is false because the plugin does not process purchases.
+
+Public packaging reads the committed `HEAD` tree, including its manifest, rather
+than recursively copying the working directory. Commit intended content changes
+before packaging; ignored, untracked, staged-only and unstaged edits are excluded.
+Symlinks and submodules inside package content are rejected. Run
+`pnpm check:codex-package` for the local-secret and version-override regression
+checks (`git`, `zip` and `unzip` are required). This check also runs in CI.

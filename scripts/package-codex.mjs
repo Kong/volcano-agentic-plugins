@@ -1,12 +1,35 @@
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const source = path.join(root, "plugins/codex");
-const native = JSON.parse(readFileSync(path.join(source, ".codex-plugin/plugin.json"), "utf8"));
+// Freeze one committed tree. Never recurse through a developer worktree: even
+// ignored files or an on-disk symlink under skills could expose local secrets.
+const revision = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+const prefix = "plugins/codex/";
+const entries = [".codex-plugin/plugin.json", "skills", "assets", "LICENSE", "README.md"];
+const tree = execFileSync("git", ["ls-tree", "-r", "-z", revision, "--", ...entries.map((entry) => prefix + entry)], { cwd: root, encoding: "utf8" });
+const files = new Map();
+for (const record of tree.split("\0").filter(Boolean)) {
+  const separator = record.indexOf("\t");
+  const header = record.slice(0, separator);
+  const filename = record.slice(separator + 1);
+  const [mode, type, sha] = header.split(" ");
+  if (type !== "blob" || !["100644", "100755"].includes(mode)) {
+    throw new Error(`Public package requires regular committed files: ${filename}`);
+  }
+  const relative = filename.slice(prefix.length);
+  if (relative.split("/").some((part) => [".git", ".github", ".DS_Store"].includes(part))) continue;
+  files.set(relative, { sha, mode });
+}
+function blob(relative) {
+  const file = files.get(relative);
+  if (!file) throw new Error(`Required public package file is not committed: ${relative}`);
+  return execFileSync("git", ["cat-file", "blob", file.sha], { cwd: root, maxBuffer: 16 * 1024 * 1024 });
+}
+const native = JSON.parse(blob(".codex-plugin/plugin.json").toString("utf8"));
 const args = process.argv.slice(2);
 if (args.length !== 0 && (args.length !== 2 || args[0] !== "--version")) {
   throw new Error("Usage: pnpm package:codex [--version X.Y.Z]");
@@ -27,15 +50,12 @@ const portable = {
   extensions: { "com.openai": { interface: ui, publication, review } },
 };
 const staging = mkdtempSync(path.join(tmpdir(), "volcano-codex-"));
-const excluded = new Set([".git", ".github", ".DS_Store"]);
 try {
   mkdirSync(path.join(staging, ".codex-plugin"));
-  // Allowlist package contents: no workspace state, credentials or MCP config.
-  for (const entry of ["skills", "assets", "LICENSE", "README.md"]) {
-    cpSync(path.join(source, entry), path.join(staging, entry), {
-      recursive: true,
-      filter: (src) => !excluded.has(path.basename(src)),
-    });
+  for (const [relative, file] of files) {
+    const destination = path.join(staging, relative);
+    mkdirSync(path.dirname(destination), { recursive: true });
+    writeFileSync(destination, blob(relative), { mode: file.mode === "100755" ? 0o755 : 0o644 });
   }
   writeFileSync(path.join(staging, "plugin.json"), JSON.stringify(portable, null, 2) + "\n");
   writeFileSync(path.join(staging, ".codex-plugin/plugin.json"), JSON.stringify({ ...native, version }, null, 2) + "\n");
@@ -50,7 +70,7 @@ try {
   const pending = path.join(outputDir, `${path.basename(staging)}.zip`);
   cpSync(path.join(staging, "package.zip"), pending);
   renameSync(pending, output);
-  console.log(`Public skills-only plugin: ${output}`);
+  console.log(`Public skills-only plugin from ${revision}: ${output}`);
 } finally {
   rmSync(staging, { recursive: true, force: true });
 }

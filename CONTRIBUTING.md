@@ -284,3 +284,10 @@ version flag is for an explicit public submission revision (the original public
 Before an upload, update publication release notes, validate the canonical skill
 pin and materialized content, and select a public version newer than the previous
 submission. Upload/review/publication remains a separate publisher step.
+
+Public packaging reads the committed `HEAD` tree, including its manifest, rather
+than recursively copying the working directory. Commit intended content changes
+before packaging; ignored, untracked, staged-only and unstaged edits are excluded.
+Symlinks and submodules inside package content are rejected. Run
+`pnpm check:codex-package` for the local-secret and version-override regression
+checks (`git`, `zip` and `unzip` are required). This check also runs in CI.
