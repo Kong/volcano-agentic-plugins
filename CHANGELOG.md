@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.26](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.25...v0.2.26) (2026-10-06)
+
+
+### Bug Fixes
+
+* **plugins:** close remaining workspace-trust gaps and bound runCli timeouts ([#107](https://github.com/Kong/volcano-agentic-plugins/issues/107)) ([dea48eb](https://github.com/Kong/volcano-agentic-plugins/commit/dea48eb4df5d642b297db0b692a1936604ac9a1e))
+
 ## [0.2.25](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.24...v0.2.25) (2026-10-06)
 
 
