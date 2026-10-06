@@ -181,7 +181,7 @@ const INSTALL_VOLCANO_SCRIPT = "set -eu\n\nVOLCANO_WEB_URL=\"${VOLCANO_WEB_URL:-
  * keeps literal in POSIX shells, fish and PowerShell, and that cmd.exe ignores.
  */
 function installVolcanoShellCommand(cfg: ResolvedConfig): string | undefined {
-  if (!/^https?:\/\/[A-Za-z0-9._~:/[\]-]+$/.test(cfg.webUrl)) return undefined;
+  if (!/^https?:\/\/[A-Za-z0-9._~:/[\]-]+$/i.test(cfg.webUrl)) return undefined;
   return `VOLCANO_WEB_URL=${quote(cfg.webUrl)} sh <<'VOLCANO_INSTALL_EOF'
 ${INSTALL_VOLCANO_SCRIPT}
 VOLCANO_INSTALL_EOF`;
