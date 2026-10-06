@@ -104,6 +104,7 @@ pnpm check:marketplace-assets
 pnpm check:codex
 pnpm check:claude-desktop
 pnpm -r typecheck
+pnpm test:core
 ```
 
 For full local validation, including host-specific validators and package builds:

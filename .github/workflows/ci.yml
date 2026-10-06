@@ -63,6 +63,9 @@ jobs:
       - name: Typecheck
         run: pnpm -r typecheck
 
+      - name: Unit-test shared core
+        run: pnpm test:core
+
       - name: Build VS Code extension
         run: pnpm --filter volcano build
 

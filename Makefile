@@ -13,6 +13,7 @@ test:
 	$(PNPM) check:codex-package
 	$(PNPM) check:claude-desktop
 	$(PNPM) -r typecheck
+	$(PNPM) test:core
 
 # Build/package release artifacts locally.
 package:

@@ -23,7 +23,7 @@ skills, `AGENTS.md`, or safety text.
 | --- | --- | --- |
 | `volcano.webUrl` | `https://volcano.dev` | Origin for docs/skills/`AGENTS.md`. Set `http://localhost:3000` for dev. |
 | `volcano.apiUrl` | _(empty)_ | Non-prod API URL for the CLI (e.g. `http://localhost:8000`). |
-| `volcano.cliPath` | `volcano` | Path to the CLI binary. |
+| `volcano.cliPath` | `volcano` | Path to the CLI binary. Machine-scoped: set it in user or remote settings, not workspace settings. |
 
 Settings override the `VOLCANO_WEB_URL` / `VOLCANO_API_URL` environment
 variables, which override the production default.

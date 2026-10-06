@@ -31,6 +31,11 @@ export const DEFAULT_CLI_BINARY = "volcano";
 /**
  * Run `volcano <args>` and resolve with captured output. Never rejects for a
  * non-zero exit; inspect `code`/`stderr`. Rejects only on internal misuse.
+ *
+ * The binary is executed directly with `args` as its argv; no shell parses
+ * either, so metacharacters in them stay literal. Keep `shell: false`: on
+ * Windows that means only a real executable (e.g. `volcano.exe`) is found, not
+ * an npm `.cmd` shim, which would need a shell.
  */
 export function runCli(
   args: string[],
