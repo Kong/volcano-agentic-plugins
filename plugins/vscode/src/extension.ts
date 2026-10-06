@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { runCli, isCliAvailable, fetchAgentsMd } from "@volcano-plugins/core";
+import { runCli, isCliAvailable, fetchAgentsMd, httpUrl } from "@volcano-plugins/core";
 import { getConfig, cliEnv, type ResolvedConfig } from "./vscode-config";
 
 let output: vscode.OutputChannel;
@@ -62,11 +62,12 @@ async function refreshStatusBar(): Promise<void> {
 
 async function startBuilding(): Promise<void> {
   const cfg = getConfig();
+  const guideUrl = `${cfg.webUrl}/startbuilding`;
   const pick = await vscode.window.showQuickPick(
     [
       {
         label: "$(globe) Open Start Building guide",
-        detail: `${cfg.webUrl}/startbuilding`,
+        detail: guideUrl,
         action: "guide" as const,
       },
       {
@@ -83,7 +84,15 @@ async function startBuilding(): Promise<void> {
   );
   if (!pick) return;
   if (pick.action === "guide") {
-    await vscode.env.openExternal(vscode.Uri.parse(`${cfg.webUrl}/startbuilding`));
+    // openExternal also opens file:, vscode: and other app links; only send a web page.
+    const url = httpUrl(guideUrl);
+    if (!url) {
+      void vscode.window.showErrorMessage(
+        `The Start Building guide needs an http(s) web URL, not ${cfg.webUrl}. Check volcano.webUrl or VOLCANO_WEB_URL.`,
+      );
+      return;
+    }
+    await vscode.env.openExternal(vscode.Uri.parse(url));
   } else if (pick.action === "install") {
     await installVolcano();
   } else {

@@ -59,3 +59,18 @@ export function resolveEndpoints(
 export function isDevWebUrl(webUrl: string): boolean {
   return /\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/.test(webUrl);
 }
+
+/**
+ * Normalized `value` when it is an absolute http: or https: URL, else
+ * undefined. Check a configured URL with this before handing it to a browser
+ * or OS opener, which would also open file:, vscode: or other app links.
+ */
+export function httpUrl(value: string): string | undefined {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return undefined;
+  }
+  return url.protocol === "http:" || url.protocol === "https:" ? url.href : undefined;
+}

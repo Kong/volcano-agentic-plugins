@@ -4,6 +4,7 @@ export {
   resolveApiUrl,
   resolveEndpoints,
   isDevWebUrl,
+  httpUrl,
 } from "./config";
 export type { VolcanoEndpoints } from "./config";
 
