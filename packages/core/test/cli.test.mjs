@@ -49,7 +49,7 @@ test("keeps exit code, stdout, stderr and stdin handling", async () => {
     "process.stdin.on('end', () => {",
     "  process.stdout.write(input.toUpperCase());",
     "  process.stderr.write('warned');",
-    "  process.exit(7);",
+    "  process.exitCode = 7;",
     "});",
   ].join("\n");
 
