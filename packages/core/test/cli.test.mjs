@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, test } from "node:test";
@@ -107,28 +107,31 @@ test("stops waiting for output pipes that a descendant keeps open", {
   timeout: 10_000,
 }, async (t) => {
   t.mock.timers.enable({ apis: ["setTimeout"] });
-  const ready = path.join(scratch, "descendant-started");
+  const ready = path.join(scratch, "descendant-pid");
 
   // The backgrounded sleep inherits stdout and keeps it open after the shell is gone.
-  const run = runCli(["-c", `sleep 30 & echo $!; : > "$0"; exit 0`, ready], {
+  // Its pid is published atomically, so the test never reads a half-written file.
+  const run = runCli(["-c", `sleep 30 & echo $! > "$0.tmp" && mv "$0.tmp" "$0"; exit 0`, ready], {
     binary: "/bin/sh",
     timeoutMs: 1000,
     killGraceMs: 1000,
   });
   await waitForFile(ready);
-  t.mock.timers.tick(1000); // SIGTERM
-  t.mock.timers.tick(1000); // SIGKILL
-  t.mock.timers.tick(1000); // stop waiting for the pipes
-  const result = await run;
-  const pid = Number(result.stdout);
-  // Only signal a real descendant pid: kill(0) or kill(-1) would hit the test runner's group.
-  if (Number.isInteger(pid) && pid > 0) {
+  const pid = Number(readFileSync(ready, "utf8"));
+  assert.ok(Number.isInteger(pid) && pid > 0, `bad descendant pid: ${pid}`);
+  t.after(() => {
     try {
       process.kill(pid, "SIGKILL");
     } catch {}
-  }
+  });
 
-  assert.match(result.stdout, /^\d+\n$/);
+  t.mock.timers.tick(1000); // SIGTERM
+  t.mock.timers.tick(1000); // SIGKILL
+  t.mock.timers.tick(1000); // stop waiting for the pipes
+  await run;
+
+  // Still alive, so its copy of stdout was still open when runCli resolved.
+  assert.doesNotThrow(() => process.kill(pid, 0));
 });
 
 test("reports the exit of a child that stops reading stdin instead of throwing EPIPE", async () => {
