@@ -23,7 +23,14 @@ skills, `AGENTS.md`, or safety text.
 | --- | --- | --- |
 | `volcano.webUrl` | `https://volcano.dev` | Origin for docs/skills/`AGENTS.md`. Set `http://localhost:3000` for dev. |
 | `volcano.apiUrl` | _(empty)_ | Non-prod API URL for the CLI (e.g. `http://localhost:8000`). |
-| `volcano.cliPath` | `volcano` | Path to the CLI binary. Machine-scoped: set it in user or remote settings, not workspace settings. |
+| `volcano.cliPath` | `volcano` | Path to the CLI binary. |
+
+All three settings are machine-scoped: set them in user settings, or in Remote
+settings for a remote window (SSH, dev container, WSL), where local user values
+for them don't apply. VS Code ignores them in workspace and folder settings
+(`.vscode/settings.json`, `.code-workspace`), so an opened repository can't
+choose the executable, where content is downloaded from, or where the CLI sends
+requests.
 
 Settings override the `VOLCANO_WEB_URL` / `VOLCANO_API_URL` environment
 variables, which override the production default.
