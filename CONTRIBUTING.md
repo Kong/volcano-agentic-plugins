@@ -85,6 +85,18 @@ landing the bump there so its CI re-runs. `main` still has branch protection
 requiring `validate`, so a PR left failing on skill drift cannot merge until
 its fix-up lands — which now happens automatically.
 
+## Testing install-volcano against a plugin checkout
+
+The `install-volcano` scripts and `scripts/bootstrap.sh` only take plugin skills
+from installed plugin directories (`~/.claude/plugins`, `~/.codex/plugins`,
+`~/.cursor/plugins`). They never read a `skills/` directory from the current
+directory, so a cloned repository can't supply them. To exercise a checkout's
+skills, point the installer at them explicitly:
+
+```sh
+VOLCANO_PLUGIN_SKILLS_DIR="$PWD/plugins/claude-code/skills" sh scripts/bootstrap.sh
+```
+
 ## Validation before committing
 
 Run the main pnpm checks locally:

@@ -1,4 +1,7 @@
-import { readFileSync, existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 function read(path) {
   return readFileSync(path, "utf8");
@@ -72,6 +75,70 @@ function assertPluginFirstWiring(script, label) {
   assert(guardIdx !== -1 && (upsertIdx === -1 || guardIdx < upsertIdx), `${label} must check the plugin before upserting a managed block`);
 }
 
+// The installers usually run from inside the user's open project. A repository
+// must not be able to supply the AGENTS.md and skills that land in the user's
+// global agent config, so run each script's own discovery in a sandbox HOME from
+// a workspace that carries a Volcano-shaped skills directory at $PWD, $PWD/skills
+// and ../skills, with more repository copies under host directories that are
+// not plugin installs, and require that only an installed plugin or the explicit
+// VOLCANO_PLUGIN_SKILLS_DIR override is ever chosen.
+function plantSkillsDir(dir) {
+  mkdirSync(path.join(dir, "volcano-platform"), { recursive: true });
+  writeFileSync(path.join(dir, "AGENTS.md"), "# Volcano (planted)\n");
+  writeFileSync(path.join(dir, "index.json"), "{}\n");
+  writeFileSync(path.join(dir, "volcano-platform", "SKILL.md"), "# Volcano (planted)\n");
+}
+
+function assertIgnoresWorkspaceSkills(script, label) {
+  const discovery = ["valid_agents_md", "is_plugin_skills_dir", "find_plugin_skills_dir"]
+    .map((fn) => {
+      const body = shellFunctionBody(script, fn);
+      assert(body, `${label} must define ${fn}()`);
+      return `${body}\n}`;
+    })
+    .join("\n");
+
+  const sandbox = mkdtempSync(path.join(tmpdir(), "volcano-installer-skills-"));
+  try {
+    const home = path.join(sandbox, "home");
+    const workspace = path.join(sandbox, "projects", "repo");
+    mkdirSync(home, { recursive: true });
+    plantSkillsDir(workspace);
+    plantSkillsDir(path.join(workspace, "skills"));
+    plantSkillsDir(path.join(sandbox, "projects", "skills"));
+    // Repository checkouts can also sit under a host's own directory, e.g. Cursor's agent worktrees.
+    plantSkillsDir(path.join(home, ".cursor", "worktrees", "repo", "abc", "skills"));
+    plantSkillsDir(path.join(home, ".claude", "projects", "repo", "skills"));
+    plantSkillsDir(path.join(home, ".config", "repo", "skills"));
+
+    const find = (env = {}) => {
+      const result = spawnSync("/bin/sh", ["-c", `${discovery}\nfind_plugin_skills_dir`], {
+        cwd: workspace,
+        env: { PATH: process.env.PATH, HOME: home, ...env },
+        encoding: "utf8",
+      });
+      return result.status === 0 ? result.stdout.trim() : undefined;
+    };
+
+    assert(find() === undefined, `${label} must not install plugin skills from the workspace`);
+
+    for (const installed of [
+      path.join(home, ".claude", "plugins", "cache", "volcano-agentic-plugins", "volcano", "0.0.0", "skills"),
+      path.join(home, ".cursor", "plugins", "local", "volcano", "skills"),
+    ]) {
+      plantSkillsDir(installed);
+      assert(find() === installed, `${label} must use the installed plugin's skills at ${path.relative(home, installed)}, not the workspace's`);
+      rmSync(installed, { recursive: true });
+    }
+
+    const checkout = path.join(sandbox, "checkout", "skills");
+    plantSkillsDir(checkout);
+    assert(find({ VOLCANO_PLUGIN_SKILLS_DIR: checkout }) === checkout, `${label} must honor VOLCANO_PLUGIN_SKILLS_DIR`);
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+}
+
 function assertVerifiedSkill(content, label) {
   assert(content.includes("name: install-volcano"), `${label} must be named install-volcano`);
   assert(content.includes("Do not auto-upgrade"), `${label} must reuse the installed CLI`);
@@ -106,6 +173,8 @@ for (const [path, label] of pluginFirstCopies) {
   if (canonicalScript === undefined) canonicalScript = script;
   else assert(script === canonicalScript, `${label} installer script has drifted from the other copies`);
 }
+assertIgnoresWorkspaceSkills(canonicalScript, "install-volcano installer script");
+assertIgnoresWorkspaceSkills(read("scripts/bootstrap.sh"), "scripts/bootstrap.sh");
 
 for (const plugin of ["cursor", "claude-code", "claude-desktop", "codex"]) {
   const skillPath = `plugins/${plugin}/skills/install-volcano/SKILL.md`;

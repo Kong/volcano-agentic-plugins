@@ -69,12 +69,14 @@
         "volcano.webUrl": {
           "type": "string",
           "default": "https://volcano.dev",
-          "markdownDescription": "Base URL for Volcano docs, skills, and `AGENTS.md`. Set to `http://localhost:3000` for local development. Overrides `VOLCANO_WEB_URL`."
+          "scope": "machine",
+          "markdownDescription": "Base URL for Volcano docs, skills, and `AGENTS.md`. Set to `http://localhost:3000` for local development. Overrides `VOLCANO_WEB_URL`. Set it in user or remote settings; workspace settings cannot choose where content is downloaded from."
         },
         "volcano.apiUrl": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Non-production Volcano API URL the CLI should target (e.g. `http://localhost:8000`). Leave empty to use the CLI's built-in production default. Overrides `VOLCANO_API_URL`."
+          "scope": "machine",
+          "markdownDescription": "Non-production Volcano API URL the CLI should target (e.g. `http://localhost:8000`). Leave empty to use the CLI's built-in production default. Overrides `VOLCANO_API_URL`. Set it in user or remote settings; workspace settings cannot choose where the CLI sends requests."
         },
         "volcano.cliPath": {
           "type": "string",

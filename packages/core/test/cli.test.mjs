@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, test } from "node:test";
@@ -67,4 +67,79 @@ test("terminates a child that outlives timeoutMs", async () => {
 
   assert.equal(result.code, null);
   assert.equal(result.signal, "SIGTERM");
+});
+
+// Wait on real time while runCli's setTimeout is mocked. Only setTimeout is mocked,
+// so setImmediate and Date stay real.
+async function waitForFile(file) {
+  const deadline = Date.now() + 5000;
+  while (!existsSync(file)) {
+    if (Date.now() > deadline) throw new Error(`timed out waiting for ${file}`);
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+}
+
+test("escalates to SIGKILL when the child ignores SIGTERM", {
+  skip: process.platform === "win32" && "Windows has no SIGTERM to ignore",
+  timeout: 10_000,
+}, async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const ready = path.join(scratch, "sigterm-ignored");
+
+  // An ignored signal stays ignored across exec, so sleep keeps ignoring SIGTERM.
+  // The timeout only fires once the trap is in place, so the test can't race it.
+  const run = runCli(["-c", `trap '' TERM; : > "$0"; exec sleep 30`, ready], {
+    binary: "/bin/sh",
+    timeoutMs: 1000,
+    killGraceMs: 1000,
+  });
+  await waitForFile(ready);
+  t.mock.timers.tick(1000); // SIGTERM, ignored
+  t.mock.timers.tick(1000); // SIGKILL
+  const result = await run;
+
+  assert.equal(result.code, null);
+  assert.equal(result.signal, "SIGKILL");
+});
+
+test("stops waiting for output pipes that a descendant keeps open", {
+  skip: process.platform === "win32" && "uses a POSIX shell",
+  timeout: 10_000,
+}, async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const ready = path.join(scratch, "descendant-pid");
+
+  // The backgrounded sleep inherits stdout and keeps it open after the shell is gone.
+  // Its pid is published atomically, so the test never reads a half-written file.
+  const run = runCli(["-c", `sleep 30 & echo $! > "$0.tmp" && mv "$0.tmp" "$0"; exit 0`, ready], {
+    binary: "/bin/sh",
+    timeoutMs: 1000,
+    killGraceMs: 1000,
+  });
+  await waitForFile(ready);
+  const pid = Number(readFileSync(ready, "utf8"));
+  assert.ok(Number.isInteger(pid) && pid > 0, `bad descendant pid: ${pid}`);
+  t.after(() => {
+    try {
+      process.kill(pid, "SIGKILL");
+    } catch {}
+  });
+
+  t.mock.timers.tick(1000); // SIGTERM
+  t.mock.timers.tick(1000); // SIGKILL
+  t.mock.timers.tick(1000); // stop waiting for the pipes
+  await run;
+
+  // Still alive, so its copy of stdout was still open when runCli resolved.
+  assert.doesNotThrow(() => process.kill(pid, 0));
+});
+
+test("reports the exit of a child that stops reading stdin instead of throwing EPIPE", async () => {
+  // More than a pipe buffer, so the write is still pending when the child exits.
+  const input = "x".repeat(8 * 1024 * 1024);
+
+  const result = await runCli(["-e", "process.exit(3)"], { binary: process.execPath, input });
+
+  assert.equal(result.spawnError, undefined);
+  assert.equal(result.code, 3);
 });
