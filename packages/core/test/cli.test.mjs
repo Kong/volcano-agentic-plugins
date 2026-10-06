@@ -120,9 +120,13 @@ test("stops waiting for output pipes that a descendant keeps open", {
   t.mock.timers.tick(1000); // SIGKILL
   t.mock.timers.tick(1000); // stop waiting for the pipes
   const result = await run;
-  try {
-    process.kill(Number(result.stdout), "SIGKILL");
-  } catch {}
+  const pid = Number(result.stdout);
+  // Only signal a real descendant pid: kill(0) or kill(-1) would hit the test runner's group.
+  if (Number.isInteger(pid) && pid > 0) {
+    try {
+      process.kill(pid, "SIGKILL");
+    } catch {}
+  }
 
   assert.match(result.stdout, /^\d+\n$/);
 });
