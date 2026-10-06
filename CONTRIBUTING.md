@@ -72,6 +72,11 @@ above:
   branch so CI there re-runs and passes, with no label, comment, or maintainer
   step.
 
+The PR drift-fix job skips draft PRs so a draft can pin an unmerged canonical
+skills dependency without having it overwritten. Merge that dependency and refresh
+the pin before marking the plugin PR ready; the upstream freshness gate remains
+required.
+
 Both automations merge their own sync PRs automatically once checks pass
 instead of waiting for a maintainer: the `main` sync arms squash auto-merge
 (gated on the required `validate` check), and the drift fix squash-merges its
@@ -264,3 +269,25 @@ full commit SHA with a trailing `# vX.Y.Z` comment, not a mutable tag
 action, resolve the new tag's commit with
 `git ls-remote https://github.com/<owner>/<repo>.git refs/tags/<tag>^{}` and
 update every occurrence of that action across all three workflow files.
+
+## Public Codex submission updates
+
+`plugins/codex/.codex-plugin/plugin.json` owns the listing, review and publication
+metadata. `pnpm package:codex [--version X.Y.Z]` generates both the portable root
+manifest and Codex compatibility manifest from it, and packages only skills,
+assets, README and LICENSE into `dist/volcano-<version>-public.zip`. CI smoke-tests
+packaging. No CLI or MCP service is bundled.
+
+Keep normal repository versions coordinated via Release Please. The optional
+version flag is for an explicit public submission revision (the original public
+0.2.25 draft came from repository 0.2.23); it changes only the generated ZIP.
+Before an upload, update publication release notes, validate the canonical skill
+pin and materialized content, and select a public version newer than the previous
+submission. Upload/review/publication remains a separate publisher step.
+
+Public packaging reads the committed `HEAD` tree, including its manifest, rather
+than recursively copying the working directory. Commit intended content changes
+before packaging; ignored, untracked, staged-only and unstaged edits are excluded.
+Symlinks and submodules inside package content are rejected. Run
+`pnpm check:codex-package` for the local-secret and version-override regression
+checks (`git`, `zip` and `unzip` are required). This check also runs in CI.

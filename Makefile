@@ -10,6 +10,7 @@ test:
 	$(PNPM) check:install-entrypoints
 	$(PNPM) check:marketplace-assets
 	$(PNPM) check:codex
+	$(PNPM) check:codex-package
 	$(PNPM) check:claude-desktop
 	$(PNPM) -r typecheck
 
