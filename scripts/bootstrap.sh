@@ -31,6 +31,8 @@
 #   VOLCANO_HOME         canonical install dir (default ~/.volcano)
 #   VOLCANO_INSTALL_DIR  override CLI install dir (GitHub-release fallback only)
 #   VOLCANO_CLI_NPM_PACKAGE  override the npm package spec (default @volcano.dev/cli@latest)
+#   VOLCANO_PLUGIN_SKILLS_DIR  plugin skills/ directory to use, e.g. a plugin checkout
+#                        (default: search installed plugins, never the current directory)
 set -eu
 
 WEB_URL="${VOLCANO_WEB_URL:-https://volcano.dev}"
@@ -344,10 +346,10 @@ install_or_upgrade_cli() {
 }
 
 # ---------------------------------------------------------------------------
-# AGENTS.md + skills. Prefer a plugin-carried skills directory when this
-# script happens to run from inside a plugin checkout/cache (mirrors the
-# per-plugin install-volcano command's detection); otherwise fetch AGENTS.md
-# and the skills manifest from $WEB_URL. No CLAUDE.md fetch — Claude Code
+# AGENTS.md + skills. Prefer the skills directory carried by an installed
+# Volcano plugin, or by VOLCANO_PLUGIN_SKILLS_DIR (mirrors the per-plugin
+# install-volcano command's detection); otherwise fetch AGENTS.md and the
+# skills manifest from $WEB_URL. No CLAUDE.md fetch — Claude Code
 # uses an @-import to ~/.volcano/AGENTS.md instead of a separate file.
 # ---------------------------------------------------------------------------
 valid_agents_md() {
@@ -373,17 +375,16 @@ find_plugin_skills_dir() {
         return 0
     fi
 
-    for dir in "$PWD" "$PWD/skills" "$(dirname "$PWD")/skills"; do
-        if is_plugin_skills_dir "$dir"; then
-            printf '%s\n' "$dir"
-            return 0
-        fi
-    done
-
+    # Search only where hosts install plugins. Never search $PWD, its parent, or
+    # broader trees such as ~/.cursor that can hold repository checkouts (agent
+    # worktrees, for example): the installer usually runs from inside a project,
+    # and a repository could carry a Volcano-shaped skills/ directory whose
+    # AGENTS.md and skills would then land in the user's global agent config.
+    # For a plugin checkout, set VOLCANO_PLUGIN_SKILLS_DIR.
     for root in \
         "$HOME/.codex/plugins" \
         "$HOME/.claude/plugins" \
-        "$HOME/.cursor"; do
+        "$HOME/.cursor/plugins"; do
         [ -d "$root" ] || continue
         # -maxdepth bounds the walk to where a plugin-carried skills/AGENTS.md
         # actually lives. Real marketplace/cache layouts nest deeper than a
@@ -391,8 +392,8 @@ find_plugin_skills_dir() {
         # ~/.claude/plugins/cache/volcano-agentic-plugins/volcano/<ver>/skills/AGENTS.md
         # (depth 6) and ~/.cursor/plugins/local/volcano/skills/AGENTS.md (depth 5) —
         # 7 covers those with headroom. The roots themselves are scoped to
-        # */plugins (or ~/.cursor, which has no large unrelated trees), so this
-        # stays bounded — it does not crawl ~/.claude/projects or ~/.claude/todos.
+        # */plugins, so this stays bounded — it does not crawl ~/.claude/projects,
+        # ~/.claude/todos or ~/.cursor/worktrees.
         found="$(find "$root" -maxdepth 7 -type f -path '*/skills/AGENTS.md' 2>/dev/null | while IFS= read -r file; do
             dir="$(dirname "$file")"
             if is_plugin_skills_dir "$dir"; then
@@ -418,7 +419,7 @@ agent_plugin_root() {
     case "$1" in
     claude) printf '%s' "$HOME/.claude/plugins" ;;
     codex) printf '%s' "$HOME/.codex/plugins" ;;
-    cursor) printf '%s' "$HOME/.cursor" ;;
+    cursor) printf '%s' "$HOME/.cursor/plugins" ;;
     esac
 }
 

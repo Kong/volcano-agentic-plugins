@@ -68,21 +68,16 @@ find_plugin_skills_dir() {
     return 0
   fi
 
-  # Fast local cases: running from a plugin checkout or from inside skills/.
-  for dir in "$PWD" "$PWD/skills" "$(dirname "$PWD")/skills"; do
-    if is_plugin_skills_dir "$dir"; then
-      printf '%s\n' "$dir"
-      return 0
-    fi
-  done
-
-  # Common marketplace/cache roots. Kept narrow so install doesn't scan all of $HOME.
+  # Search only where hosts install plugins. Never search $PWD, its parent, or
+  # broader trees such as ~/.cursor that can hold repository checkouts (agent
+  # worktrees, for example): the installer usually runs from inside a project,
+  # and a repository could carry a Volcano-shaped skills/ directory whose
+  # AGENTS.md and skills would then land in the user's global agent config.
+  # For a plugin checkout, set VOLCANO_PLUGIN_SKILLS_DIR.
   for root in \
     "$HOME/.codex/plugins" \
     "$HOME/.claude/plugins" \
-    "$HOME/.claude" \
-    "$HOME/.cursor" \
-    "$HOME/.config"; do
+    "$HOME/.cursor/plugins"; do
     [ -d "$root" ] || continue
     found="$(find "$root" -type f -path '*/skills/AGENTS.md' 2>/dev/null | while IFS= read -r file; do
       dir="$(dirname "$file")"
