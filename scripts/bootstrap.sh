@@ -390,7 +390,8 @@ find_plugin_skills_dir() {
         # actually lives. Real marketplace/cache layouts nest deeper than a
         # single plugin dir, e.g.
         # ~/.claude/plugins/cache/volcano-agentic-plugins/volcano/<ver>/skills/AGENTS.md
-        # (depth 6) and ~/.cursor/plugins/local/volcano/skills/AGENTS.md (depth 5) —
+        # (depth 6 under ~/.claude/plugins) and
+        # ~/.cursor/plugins/local/volcano/skills/AGENTS.md (depth 4 under ~/.cursor/plugins) —
         # 7 covers those with headroom. The roots themselves are scoped to
         # */plugins, so this stays bounded — it does not crawl ~/.claude/projects,
         # ~/.claude/todos or ~/.cursor/worktrees.
