@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.25](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.24...v0.2.25) (2026-10-06)
+
+
+### Bug Fixes
+
+* **plugins:** keep workspace settings from choosing or injecting CLI commands ([#105](https://github.com/Kong/volcano-agentic-plugins/issues/105)) ([4ff5ea0](https://github.com/Kong/volcano-agentic-plugins/commit/4ff5ea0eb538e232ee99685409264ecc7a153f4e))
+
 ## [0.2.24](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.23...v0.2.24) (2026-10-06)
 
 
