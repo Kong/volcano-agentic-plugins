@@ -12,6 +12,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
+    "test:core": "pnpm --filter @volcano-plugins/core test",
     "clean": "pnpm -r clean",
     "check:no-content-duplicates": "node scripts/check-no-content-duplicates.mjs",
     "check:skill-submodules": "node scripts/check-skill-submodules.mjs",

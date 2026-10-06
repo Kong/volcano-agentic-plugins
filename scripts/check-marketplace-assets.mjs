@@ -53,6 +53,10 @@ assertFile(path.join("plugins/vscode", vscode.icon));
 const vscodeIcon = pngSize(path.join("plugins/vscode", vscode.icon));
 assert(vscodeIcon.width === 128 && vscodeIcon.height === 128, "VS Code icon must be 128x128 PNG");
 assert(vscode.license === "Apache-2.0", "VS Code manifest must declare Apache-2.0");
+assert(
+  vscode.contributes?.configuration?.properties?.["volcano.cliPath"]?.scope === "machine",
+  "VS Code volcano.cliPath must be machine-scoped so workspace settings cannot choose the executable",
+);
 
 assert(claudeDesktop.icon === "./assets/volcano_256.png", "Claude Desktop manifest must declare ./assets/volcano_256.png");
 assertFile(path.join("plugins/claude-desktop", claudeDesktop.icon));

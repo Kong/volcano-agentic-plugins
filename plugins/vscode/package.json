@@ -79,7 +79,8 @@
         "volcano.cliPath": {
           "type": "string",
           "default": "volcano",
-          "description": "Path to the Volcano CLI binary. Use an absolute path if it is not on PATH."
+          "scope": "machine",
+          "description": "Path to the Volcano CLI binary. Use an absolute path if it is not on PATH. Set it in user or remote settings; workspace settings cannot choose the executable."
         }
       }
     }
