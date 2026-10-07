@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.31](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.30...v0.2.31) (2026-10-07)
+
+
+### Bug Fixes
+
+* **plugins:** route model-facing setup through bundled skills ([#118](https://github.com/Kong/volcano-agentic-plugins/issues/118)) ([d7a9e0a](https://github.com/Kong/volcano-agentic-plugins/commit/d7a9e0acd89b731b207fc7ac1d00fa8ed5629ba7))
+
 ## [0.2.30](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.29...v0.2.30) (2026-10-07)
 
 
