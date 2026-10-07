@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.34](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.33...v0.2.34) (2026-10-07)
+
+
+### Bug Fixes
+
+* **ci:** revert merge queue and Dependabot changes from [#122](https://github.com/Kong/volcano-agentic-plugins/issues/122) ([3f4ba35](https://github.com/Kong/volcano-agentic-plugins/commit/3f4ba359323e0261e7ed030f0450185595b8bf2f))
+
 ## [0.2.33](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.32...v0.2.33) (2026-10-07)
 
 
