@@ -37,11 +37,11 @@
   "tools": [
     {
       "name": "install-volcano",
-      "description": "Return the one-step Volcano CLI install/upgrade command for Claude Desktop."
+      "description": "Return the bundled, verified Volcano CLI setup skill."
     },
     {
       "name": "volcano_setup_instructions",
-      "description": "Return the canonical command for installing or upgrading the Volcano CLI."
+      "description": "Return the bundled, verified Volcano CLI setup skill."
     },
     {
       "name": "volcano_agent_instructions",

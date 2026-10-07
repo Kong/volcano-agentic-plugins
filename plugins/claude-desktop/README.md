@@ -18,14 +18,18 @@ plugins/claude-desktop/
 
 | Tool | Purpose |
 | --- | --- |
-| `install-volcano` | One-step alias returning the Volcano CLI install/upgrade command. |
-| `volcano_setup_instructions` | Returns the CLI install/upgrade command. This does not download skills into `~/.volcano/skills`. |
+| `install-volcano` | Alias returning the bundled `skills/install-volcano/SKILL.md`. |
+| `volcano_setup_instructions` | Returns the same bundled setup skill; reports an error if it is missing. |
 | `volcano_agent_instructions` | Returns canonical `AGENTS.md` from the packaged `skills/` directory. |
 | `volcano_skill_index` | Lists canonical Volcano skills from the packaged `skills/` directory. |
 
 ## User config
 
-The extension does not require user configuration. It ships Volcano instructions and skills in the MCPB, and the `install-volcano` tool installs or upgrades only the Volcano CLI.
+The extension does not require user configuration. It ships Volcano instructions and skills in the MCPB. Both setup tools return instructions; they do not execute the installer.
+
+Follow the bundled setup skill through an approved terminal workflow. Setup reuses a working CLI. Installation or an explicit upgrade uses a verified, exact npm version with normal host permissions. If terminal access is unavailable, use the official [CLI documentation](https://docs.volcano.dev/cli) and your trusted software-management process.
+
+Setup does not download replacement instructions, change global agent guidance, or patch shell startup files. A missing setup skill requires reinstalling the extension package. Skill sync replaces the bundled skill without replacing these tool entrypoints.
 
 ## Local test
 

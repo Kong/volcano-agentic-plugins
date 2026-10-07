@@ -18,7 +18,7 @@ Canonical sources:
 ## Before any Volcano work
 
 1. Use the plugin-shipped `AGENTS.md` and `volcano-*` skills from this plugin's `skills/` directory.
-2. If the `volcano` CLI is missing or stale, run `/install-volcano`. That command installs the CLI if missing or runs `volcano upgrade` if already installed. It does not download skills into `~/.volcano/skills`.
+2. Check the CLI with the plugin-shipped `install-volcano` skill. Reuse a working CLI without automatic upgrades. If setup is needed, run `/install-volcano`, which reads this plugin's bundled setup skill.
 3. Prefer the `volcano` CLI for Volcano actions. Use `volcano <area> --help` and `--json` where useful.
 
 ## Safety

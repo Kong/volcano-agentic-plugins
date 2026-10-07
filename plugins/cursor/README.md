@@ -13,7 +13,7 @@ plugins/cursor/skills  # materialized from sources/volcano-skills
 The plugin also includes:
 
 - `rules/volcano.mdc` — always-applied Volcano rule pointing at plugin-shipped Volcano instructions.
-- `commands/install-volcano.md` — `/install-volcano` command to install or upgrade the Volcano CLI. The plugin already ships the skills, so this command does not download skills into `~/.volcano/skills`.
+- `commands/install-volcano.md` — `/install-volcano` command that reads the plugin's bundled setup skill. Setup reuses a working CLI; installation or an explicit upgrade uses a verified, exact npm version with normal host permissions. Missing bundled instructions require reinstalling the plugin, not downloading replacement instructions.
 
 There is intentionally **no MCP config yet**; Volcano does not currently ship MCP.
 
@@ -24,7 +24,7 @@ There is intentionally **no MCP config yet**; Volcano does not currently ship MC
 | `.cursor-plugin/plugin.json` | Cursor plugin manifest. |
 | `skills/` | Materialized canonical Volcano skills, drift-checked against `sources/volcano-skills`. |
 | `rules/volcano.mdc` | Always-applied rule: read plugin-shipped Volcano instructions and skills before Volcano work. |
-| `commands/install-volcano.md` | `/install-volcano` command to install or upgrade the Volcano CLI without downloading runtime skills. |
+| `commands/install-volcano.md` | `/install-volcano` command pointing to the bundled `skills/install-volcano/SKILL.md`. |
 
 ## Why materialized skills?
 
