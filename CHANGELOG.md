@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.32](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.31...v0.2.32) (2026-10-07)
+
+
+### Bug Fixes
+
+* **claude-code:** add directory terms of service URL ([#119](https://github.com/Kong/volcano-agentic-plugins/issues/119)) ([0b6f4f9](https://github.com/Kong/volcano-agentic-plugins/commit/0b6f4f94f1a30a9a1b8f947a34da782cf4d01804))
+
 ## [0.2.31](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.30...v0.2.31) (2026-10-07)
 
 
