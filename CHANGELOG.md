@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.27](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.26...v0.2.27) (2026-10-07)
+
+
+### Bug Fixes
+
+* **claude-code:** use bundled verified setup for marketplace submission ([#109](https://github.com/Kong/volcano-agentic-plugins/issues/109)) ([daf3fd2](https://github.com/Kong/volcano-agentic-plugins/commit/daf3fd2f825ba0b25d095e12f184a6f78b7dc401))
+
 ## [0.2.26](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.25...v0.2.26) (2026-10-06)
 
 
