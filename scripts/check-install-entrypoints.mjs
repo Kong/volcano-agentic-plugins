@@ -141,6 +141,7 @@ function assertIgnoresWorkspaceSkills(script, label) {
 
 function assertVerifiedSkill(content, label) {
   assert(content.includes("name: install-volcano"), `${label} must be named install-volcano`);
+  assert(!/^allowed-tools:/m.test(content.split("---")[1]), `${label} must preserve host tool permissions`);
   assert(content.includes("Do not auto-upgrade"), `${label} must reuse the installed CLI`);
   assert(content.includes("npm view @volcano.dev/cli@EXACT_VERSION"), `${label} must inspect exact-version package metadata`);
   assert(content.includes("dist.integrity") && content.includes("dist.tarball"), `${label} must verify package provenance and integrity`);

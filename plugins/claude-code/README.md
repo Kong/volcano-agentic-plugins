@@ -22,16 +22,20 @@ Use the bundled setup skill:
 /volcano:install-volcano
 ```
 
-Setup reuses a working Volcano CLI. Installation or an explicit upgrade uses one exact npm package version, verifies its official repository and integrity metadata, and checks the resulting CLI version. Setup stops if verification fails. There is no separate shell installer or unchecked fallback.
+Setup uses the host's normal tool permissions and reuses a working Volcano CLI. Installation or an explicit upgrade uses one exact npm package version, verifies its official repository and integrity metadata, and checks the resulting CLI version. Setup stops if verification fails. There is no separate shell installer or unchecked fallback.
 
 ## Setup, data, and permissions
 
 - Instructions stay in the plugin. Setup does not download replacement instructions, copy global agent guidance, edit global `CLAUDE.md`, or patch shell startup files. This is the same for every marketplace.
 - CLI installation uses `@volcano.dev/cli` from `https://registry.npmjs.org`. The package downloads the matching binary from `https://github.com/Kong/volcano-cli` and verifies its checksum. npm writes the package and executable to its global installation directory and cache. Setup clears release-source overrides for each CLI invocation and npm install.
 - Skills can run the CLI, write application files, and start or deploy to local services for a requested build. Cloud deployment, deletion, credential changes, and permission changes require explicit approval. Approved cloud commands can send application code, configuration, and data to Volcano services. CLI sign-in uses human-approved device authorization.
-- The plugin has no MCP server, automatic hooks, or bundled executable. If bundled skills are missing, report the missing plugin files instead of fetching new instructions. Reference documentation is available at `https://docs.volcano.dev`.
+- The plugin has no MCP server, automatic hooks, or bundled executable. If bundled skills are missing, report the missing plugin files instead of fetching new instructions.
 
-Privacy: [Volcano Privacy Policy](https://volcano.dev/privacy). Support and security questions: [support@volcano.dev](mailto:support@volcano.dev).
+Privacy policy: [Volcano Privacy Policy](https://volcano.dev/privacy).
+
+Support: [GitHub issues](https://github.com/Kong/volcano-agentic-plugins/issues). Email support@volcano.dev for security questions.
+
+Documentation: [Volcano documentation](https://docs.volcano.dev).
 
 ## Example prompts
 
