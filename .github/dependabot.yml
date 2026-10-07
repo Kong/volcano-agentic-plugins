@@ -26,18 +26,15 @@ updates:
       prefix-development: "chore"
       include: "scope"
     groups:
-      # Minor and patch updates share one PR, and majors share another.
+      # Minor and patch updates share one PR; majors get individual PRs.
+      # Dependabot only raises those on runs where this group has no open PR
+      # (dependabot-core#14202), so merging the group PR lets majors through.
       npm-minor-patch:
         patterns:
           - "*"
         update-types:
           - "minor"
           - "patch"
-      npm-major:
-        patterns:
-          - "*"
-        update-types:
-          - "major"
     ignore:
       # Must not exceed plugins/vscode engines.vscode, or vsce refuses to
       # package; raise both together when the minimum VS Code version moves.
@@ -68,8 +65,3 @@ updates:
         update-types:
           - "minor"
           - "patch"
-      github-actions-major:
-        patterns:
-          - "*"
-        update-types:
-          - "major"
