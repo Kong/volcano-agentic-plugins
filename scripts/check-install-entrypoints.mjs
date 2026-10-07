@@ -145,7 +145,7 @@ function assertVerifiedSkill(content, label) {
   assert(content.includes("npm view @volcano.dev/cli@EXACT_VERSION"), `${label} must inspect exact-version package metadata`);
   assert(content.includes("dist.integrity") && content.includes("dist.tarball"), `${label} must verify package provenance and integrity`);
   assert(content.includes("npm install --global @volcano.dev/cli@EXACT_VERSION --registry=https://registry.npmjs.org"), `${label} must install the verified version from the official registry`);
-  for (const forbidden of ["@volcano.dev/cli@latest", "releases/latest/download", "installation.md", "bootstrap.sh", "wire_existing_claude_config"]) {
+  for (const forbidden of ["@volcano.dev/cli@latest", "releases/latest/download", "installation.md", "bootstrap.sh", "wire_existing_claude_config", "VOLCANO_WEB_URL", "skills/index.json", "CLAUDE.md"]) {
     assert(!content.includes(forbidden), `${label} must not use ${forbidden}`);
   }
 }
@@ -153,10 +153,10 @@ function assertVerifiedSkill(content, label) {
 const cursorInstall = read("plugins/cursor/commands/install-volcano.md");
 assertCliOnlyInstaller(cursorInstall, "Cursor install-volcano command");
 
-const claudeInstall = read("plugins/claude-code/commands/install-volcano.md");
-for (const forbidden of ["VOLCANO_WEB_URL", "install_manual_skills", "install_volcano_content", "wire_existing_claude_config", "installed_plugins.json"]) {
-  assert(!claudeInstall.includes(forbidden), `Claude Code setup must use bundled guidance without ${forbidden}`);
-}
+assert(
+  !existsSync("plugins/claude-code/commands/install-volcano.md"),
+  "Claude Code setup must use the bundled install-volcano skill for every marketplace, including claude-plugins-official",
+);
 
 // Keep the native host installer copies consistent. Claude Code does not
 // install instructions or change global Claude guidance.
