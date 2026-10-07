@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.35](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.34...v0.2.35) (2026-10-07)
+
+
+### Bug Fixes
+
+* **plugins:** use one agent-focused description ([54fddbc](https://github.com/Kong/volcano-agentic-plugins/commit/54fddbc18417df3f1c26d3be11e227116c4d02af))
+
 ## [0.2.34](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.33...v0.2.34) (2026-10-07)
 
 
