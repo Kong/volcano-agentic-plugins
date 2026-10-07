@@ -95,6 +95,7 @@ for (const file of ["volcano_128.png", "volcano_dark_16.svg", "volcano_light_16.
 assert(claudeCode.license === "Apache-2.0", "Claude Code manifest must declare Apache-2.0");
 assertUrl(claudeCode.homepage, "Claude Code homepage");
 assertUrl(claudeCode.repository, "Claude Code repository");
+assertUrl(claudeCode.termsOfServiceUrl, "Claude Code terms of service");
 
 assert(cursor.rules === "./rules/", "Cursor manifest must expose rules");
 assert(cursor.skills === "./skills/", "Cursor manifest must expose materialized skills");
