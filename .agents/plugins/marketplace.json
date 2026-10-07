@@ -17,7 +17,7 @@
       "category": "Engineering",
       "interface": {
         "displayName": "Volcano",
-        "description": "Volcano skills for building, testing, and deploying apps and AI agents with the Volcano CLI and SDK."
+        "description": "Skills and CLI for building and deploying apps and AI agents on Volcano. Build with functions, databases, storage, realtime, and auth through the Volcano SDK, then deploy from your agent."
       }
     }
   ]

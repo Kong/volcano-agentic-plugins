@@ -129,6 +129,16 @@ for (const file of ["volcano_128.png", "volcano_dark_16.svg", "volcano_light_16.
 assert(codex.interface?.brandColor === "#F37A58", "Codex manifest must declare the Volcano brand color (#F37A58)");
 assert(codexMarketplace.plugins?.some((plugin) => plugin?.name === "volcano" && plugin?.source?.path === "./plugins/codex"), "Codex marketplace must point at ./plugins/codex");
 
+for (const [label, description] of [
+  ["Claude Code plugin", claudeCode.description],
+  ["Claude Code catalogue entry", claudeMarketplaceEntry.description],
+  ["Cursor plugin", cursor.description],
+  ["Cursor catalogue entry", cursorMarketplace.plugins.find((plugin) => plugin.name === "volcano").description],
+  ["Codex catalogue entry", codexMarketplace.plugins.find((plugin) => plugin.name === "volcano").interface?.description],
+]) {
+  assert(description === codex.description, `${label} summary must match the common plugin summary`);
+}
+
 for (const plugin of ["cursor", "claude-code", "claude-desktop", "codex", "vscode"]) {
   assertFile(`plugins/${plugin}/LICENSE`);
 }
