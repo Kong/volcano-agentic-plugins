@@ -129,15 +129,14 @@ for (const file of ["volcano_128.png", "volcano_dark_16.svg", "volcano_light_16.
 assert(codex.interface?.brandColor === "#F37A58", "Codex manifest must declare the Volcano brand color (#F37A58)");
 assert(codexMarketplace.plugins?.some((plugin) => plugin?.name === "volcano" && plugin?.source?.path === "./plugins/codex"), "Codex marketplace must point at ./plugins/codex");
 
-assert(typeof codex.description === "string" && codex.description.includes("from Codex."), "Codex plugin summary must identify Codex");
-for (const [label, host, description] of [
-  ["Claude Code plugin", "Claude Code", claudeCode.description],
-  ["Claude Code catalogue entry", "Claude Code", claudeMarketplaceEntry.description],
-  ["Cursor plugin", "Cursor", cursor.description],
-  ["Cursor catalogue entry", "Cursor", cursorMarketplace.plugins.find((plugin) => plugin.name === "volcano").description],
-  ["Codex catalogue entry", "Codex", codexMarketplace.plugins.find((plugin) => plugin.name === "volcano").interface?.description],
+for (const [label, description] of [
+  ["Claude Code plugin", claudeCode.description],
+  ["Claude Code catalogue entry", claudeMarketplaceEntry.description],
+  ["Cursor plugin", cursor.description],
+  ["Cursor catalogue entry", cursorMarketplace.plugins.find((plugin) => plugin.name === "volcano").description],
+  ["Codex catalogue entry", codexMarketplace.plugins.find((plugin) => plugin.name === "volcano").interface?.description],
 ]) {
-  assert(description === codex.description.replace("from Codex.", `from ${host}.`), `${label} summary must use the common wording with its host name`);
+  assert(description === codex.description, `${label} summary must match the common plugin summary`);
 }
 
 for (const plugin of ["cursor", "claude-code", "claude-desktop", "codex", "vscode"]) {

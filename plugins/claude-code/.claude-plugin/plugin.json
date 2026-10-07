@@ -1,6 +1,6 @@
 {
   "name": "volcano",
-  "description": "Volcano agent skills and CLI for building and deploying apps and AI agents on Volcano from Claude Code. Work with functions, databases, storage, realtime, and auth through the Volcano SDK, and deploy straight from your editor.",
+  "description": "Skills and CLI for building and deploying apps and AI agents on Volcano. Build with functions, databases, storage, realtime, and auth through the Volcano SDK, then deploy from your agent.",
   "version": "0.2.34",
   "author": {
     "name": "Volcano",
