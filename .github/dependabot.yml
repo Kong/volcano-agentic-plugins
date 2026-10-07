@@ -18,10 +18,12 @@ updates:
       semver-major-days: 14
     # No dependency labels exist in this repo; [] stops Dependabot creating them.
     labels: []
-    # release-please releases on fix/feat. These are build and test tools, so
-    # chore(deps) keeps them out of releases and the changelog.
+    # release-please releases on fix/feat. fix(deps) covers runtime
+    # dependencies, which ship in the bundled plugins; build and test tools get
+    # chore(deps-dev) and stay out of releases and the changelog.
     commit-message:
-      prefix: "chore"
+      prefix: "fix"
+      prefix-development: "chore"
       include: "scope"
     groups:
       # Minor and patch updates share one PR; each major gets its own PR.
