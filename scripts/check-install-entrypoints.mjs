@@ -15,32 +15,10 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-// Native host installers keep their existing imperative behavior.
-// Claude Code uses bundled guidance. Model-facing skills use verified,
-// exact-version npm installs and reuse an existing working CLI.
-
-function assertCliOnlyInstaller(content, label) {
-  assert(content.includes("name: install-volcano"), `${label} must be named install-volcano`);
-  assert(content.includes("volcano upgrade"), `${label} must upgrade an existing CLI with volcano upgrade`);
-  assert(content.includes("@volcano.dev/cli@latest"), `${label} must install the Volcano CLI from npm by default`);
-  assert(content.includes("npm install -g"), `${label} must use npm install -g for the default CLI install`);
-  assert(content.includes("releases/latest/download"), `${label} must keep GitHub release download as fallback`);
-  assert(!content.includes("bootstrap.sh"), `${label} must not use bootstrap.sh`);
-  assert(!content.includes("--agent"), `${label} must not run full bootstrap agent wiring or download runtime skills`);
-}
-
-// Decode the embedded installer shell script out of each entrypoint kind so the
-// plugin-first assertions run against the *actual script* the user executes
-// (not the surrounding Markdown/JS). The Cursor command carries a fenced
-// ```sh block; the VS Code / Claude Desktop twins carry the same script as a
-// JSON string literal that starts with the `set -eu` preamble.
+// Model-facing setup uses bundled skills. VS Code retains its native installer.
+// Decode that script so the existing native installer checks remain active.
 function decodeInstallerScript(path, label) {
   const raw = read(path);
-  if (path.endsWith(".md")) {
-    const m = raw.match(/```sh\n(set -eu[\s\S]*?)\n```/);
-    assert(m, `${label} must carry a fenced sh installer block`);
-    return m[1];
-  }
   const m = raw.match(/"set -eu(?:[^"\\]|\\.)*"/);
   assert(m, `${label} must embed the installer script as a string literal`);
   return JSON.parse(m[0]);
@@ -152,29 +130,20 @@ function assertVerifiedSkill(content, label) {
 }
 
 const cursorInstall = read("plugins/cursor/commands/install-volcano.md");
-assertCliOnlyInstaller(cursorInstall, "Cursor install-volcano command");
+assert(cursorInstall.includes("name: install-volcano"), "Cursor must keep the install-volcano command");
+assert(cursorInstall.includes("../skills/install-volcano/SKILL.md"), "Cursor setup must read its bundled setup skill");
+assert(!cursorInstall.includes("```"), "Cursor setup must not embed a second installer");
+assert(!/^allowed-tools:/m.test(cursorInstall.split("---")[1]), "Cursor setup must preserve host tool permissions");
+assert(!read("plugins/cursor/rules/volcano.mdc").includes("volcano upgrade"), "Cursor's rule must not prescribe implicit CLI upgrades");
 
 assert(
   !existsSync("plugins/claude-code/commands/install-volcano.md"),
   "Claude Code setup must use the bundled install-volcano skill for every marketplace, including claude-plugins-official",
 );
 
-// Keep the native host installer copies consistent. Claude Code does not
-// install instructions or change global Claude guidance.
-const pluginFirstCopies = [
-  ["plugins/cursor/commands/install-volcano.md", "Cursor install-volcano command"],
-  ["plugins/vscode/src/extension.ts", "VS Code embedded install-volcano script"],
-  ["plugins/claude-desktop/server/index.js", "Claude Desktop embedded install-volcano script"],
-];
-let canonicalScript;
-for (const [path, label] of pluginFirstCopies) {
-  const script = decodeInstallerScript(path, label);
-  assertPluginFirstWiring(script, label);
-  // Shared native host installer copies must stay byte-identical.
-  if (canonicalScript === undefined) canonicalScript = script;
-  else assert(script === canonicalScript, `${label} installer script has drifted from the other copies`);
-}
-assertIgnoresWorkspaceSkills(canonicalScript, "install-volcano installer script");
+const vscodeScript = decodeInstallerScript("plugins/vscode/src/extension.ts", "VS Code install-volcano script");
+assertPluginFirstWiring(vscodeScript, "VS Code install-volcano script");
+assertIgnoresWorkspaceSkills(vscodeScript, "VS Code install-volcano script");
 assertIgnoresWorkspaceSkills(read("scripts/bootstrap.sh"), "scripts/bootstrap.sh");
 
 for (const plugin of ["cursor", "claude-code", "claude-desktop", "codex"]) {
