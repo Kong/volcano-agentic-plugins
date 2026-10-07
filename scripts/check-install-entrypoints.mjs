@@ -15,9 +15,9 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-// Explicit host installer commands keep their existing imperative behavior.
-// Model-facing skills use verified, exact-version npm installs and reuse an
-// existing working CLI. Validate each entrypoint against its own contract.
+// Native host installers keep their existing imperative behavior.
+// Claude Code uses bundled guidance. Model-facing skills use verified,
+// exact-version npm installs and reuse an existing working CLI.
 
 function assertCliOnlyInstaller(content, label) {
   assert(content.includes("name: install-volcano"), `${label} must be named install-volcano`);
@@ -31,7 +31,7 @@ function assertCliOnlyInstaller(content, label) {
 
 // Decode the embedded installer shell script out of each entrypoint kind so the
 // plugin-first assertions run against the *actual script* the user executes
-// (not the surrounding Markdown/JS). The two command wrappers carry a fenced
+// (not the surrounding Markdown/JS). The Cursor command carries a fenced
 // ```sh block; the VS Code / Claude Desktop twins carry the same script as a
 // JSON string literal that starts with the `set -eu` preamble.
 function decodeInstallerScript(path, label) {
@@ -56,8 +56,8 @@ function shellFunctionBody(script, name) {
   return end === -1 ? rest : rest.slice(0, end);
 }
 
-// Every command-wrapper copy (all four, not just the two Markdown ones) must
-// carry the plugin-first guard from scripts/bootstrap.sh: when the Volcano
+// Each native host installer must carry the plugin-first guard from
+// scripts/bootstrap.sh: when the Volcano
 // plugin is installed it is the source of truth, so the installer must NOT wire
 // a second, independently-stale ~/.volcano/AGENTS.md @-import into CLAUDE.md.
 // Assert call *structure* (the guard is invoked inside wire_existing_claude_config,
@@ -154,14 +154,14 @@ const cursorInstall = read("plugins/cursor/commands/install-volcano.md");
 assertCliOnlyInstaller(cursorInstall, "Cursor install-volcano command");
 
 const claudeInstall = read("plugins/claude-code/commands/install-volcano.md");
-assertCliOnlyInstaller(claudeInstall, "Claude Code install-volcano command");
+for (const forbidden of ["VOLCANO_WEB_URL", "install_manual_skills", "install_volcano_content", "wire_existing_claude_config", "installed_plugins.json"]) {
+  assert(!claudeInstall.includes(forbidden), `Claude Code setup must use bundled guidance without ${forbidden}`);
+}
 
-// Plugin-first wiring must hold for all four hand-maintained copies of the
-// installer script (the two Markdown commands plus the VS Code and Claude
-// Desktop embedded twins), so none can silently drift back to always-wiring.
+// Keep the native host installer copies consistent. Claude Code does not
+// install instructions or change global Claude guidance.
 const pluginFirstCopies = [
   ["plugins/cursor/commands/install-volcano.md", "Cursor install-volcano command"],
-  ["plugins/claude-code/commands/install-volcano.md", "Claude Code install-volcano command"],
   ["plugins/vscode/src/extension.ts", "VS Code embedded install-volcano script"],
   ["plugins/claude-desktop/server/index.js", "Claude Desktop embedded install-volcano script"],
 ];
@@ -169,7 +169,7 @@ let canonicalScript;
 for (const [path, label] of pluginFirstCopies) {
   const script = decodeInstallerScript(path, label);
   assertPluginFirstWiring(script, label);
-  // All four copies must stay byte-identical, so a fix to one can't miss another.
+  // Shared native host installer copies must stay byte-identical.
   if (canonicalScript === undefined) canonicalScript = script;
   else assert(script === canonicalScript, `${label} installer script has drifted from the other copies`);
 }
