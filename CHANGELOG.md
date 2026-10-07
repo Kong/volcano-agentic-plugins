@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.29](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.28...v0.2.29) (2026-10-07)
+
+
+### Bug Fixes
+
+* **claude-code:** preserve setup permissions and listing links ([#113](https://github.com/Kong/volcano-agentic-plugins/issues/113)) ([44f7158](https://github.com/Kong/volcano-agentic-plugins/commit/44f71580a7746f17f85aa3e0f1f69aff3bb824c2))
+
 ## [0.2.28](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.27...v0.2.28) (2026-10-07)
 
 
