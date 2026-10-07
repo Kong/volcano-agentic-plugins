@@ -1,0 +1,67 @@
+version: 2
+updates:
+  # pnpm workspace. The root entry reads pnpm-workspace.yaml, so it covers the
+  # root package.json, packages/core and plugins/vscode in pnpm-lock.yaml.
+  # Synced content stays out of scope: plugins/<ide>/skills are byte-identical
+  # copies of volcano-skills with no manifests, and there is deliberately no
+  # gitsubmodule entry, because sync-skills.yml moves sources/volcano-skills
+  # together with those copies (a bare gitlink bump fails check:skill-drift).
+  # tests/e2e-agent-eval is local test tooling with no lockfile.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    # Supply-chain safeguard: skip releases until they have aged.
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+    # No dependency labels exist in this repo; [] stops Dependabot creating them.
+    labels: []
+    # release-please releases on fix/feat. fix(deps) covers runtime
+    # dependencies, which ship in the bundled plugins; build and test tools get
+    # chore(deps-dev) and stay out of releases and the changelog.
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+    groups:
+      # Minor and patch updates share one PR; majors get individual PRs.
+      # Dependabot only raises those on runs where this group has no open PR
+      # (dependabot-core#14202), so merging the group PR lets majors through.
+      npm-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Must not exceed plugins/vscode engines.vscode, or vsce refuses to
+      # package; raise both together when the minimum VS Code version moves.
+      - dependency-name: "@types/vscode"
+      # Tracks the Node.js 24 engine; move it with a Node upgrade.
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
+
+  # Keep SHA-pinned GitHub Actions (and their `# vX.Y.Z` comments) current.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    # GitHub Actions supports only default-days, not per-SemVer cooldowns.
+    cooldown:
+      default-days: 5
+    labels: []
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      # Same policy as the npm group above.
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
