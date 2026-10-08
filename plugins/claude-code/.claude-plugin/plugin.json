@@ -1,7 +1,7 @@
 {
   "name": "volcano",
   "description": "Skills and CLI for building and deploying apps and AI agents on Volcano. Build with functions, databases, storage, realtime, and auth through the Volcano SDK, then deploy from your agent.",
-  "version": "0.2.35",
+  "version": "0.2.36",
   "author": {
     "name": "Volcano",
     "email": "support@volcano.dev"
