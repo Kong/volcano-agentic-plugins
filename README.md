@@ -12,7 +12,7 @@ behavior to the `volcano` CLI — plugins do not reimplement Volcano features.
 | Host | Path | Format | Notes |
 | --- | --- | --- | --- |
 | VS Code-family editors | [`plugins/vscode`](./plugins/vscode) | VSIX extension | For VS Code, Open VSX, Windsurf, and other VSIX-compatible editors. Cursor is not a VSIX host. |
-| Cursor | [`plugins/cursor`](./plugins/cursor) | Cursor plugin | Install [Volcano by Kong from Cursor Marketplace](https://cursor.com/marketplace/kong/volcano) (recommended). See the [installation instructions](./plugins/cursor/README.md#install-from-cursor-marketplace) or [optional manual installation](./plugins/cursor/README.md#manual-installation-optional). |
+| Cursor | [`plugins/cursor`](./plugins/cursor) | Cursor plugin | Install [Volcano from Cursor Marketplace](https://cursor.com/marketplace/kong/volcano) (recommended). See the [installation instructions](./plugins/cursor/README.md#install-from-cursor-marketplace) or [optional manual installation](./plugins/cursor/README.md#manual-installation-optional). |
 | Claude Code | [`plugins/claude-code`](./plugins/claude-code) | Claude Code plugin | Uses `.claude-plugin/plugin.json`; repo marketplace index is [`./.claude-plugin/marketplace.json`](./.claude-plugin/marketplace.json). |
 | Claude Desktop | [`plugins/claude-desktop`](./plugins/claude-desktop) | MCP Bundle / Desktop Extension | Provides setup and instruction tools; not the full Volcano MCP action surface. |
 | Codex | [`plugins/codex`](./plugins/codex) | Codex plugin | Repo marketplace index is [`./.agents/plugins/marketplace.json`](./.agents/plugins/marketplace.json). |

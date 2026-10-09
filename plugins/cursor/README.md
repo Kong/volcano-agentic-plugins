@@ -19,7 +19,7 @@ There is intentionally **no MCP config yet**; Volcano does not currently ship MC
 
 ## Install from Cursor Marketplace
 
-Install [Volcano by Kong](https://cursor.com/marketplace/kong/volcano) from Cursor Marketplace (recommended):
+Install [Volcano](https://cursor.com/marketplace/kong/volcano) from Cursor Marketplace (recommended):
 
 1. Open **Customize** in Cursor's sidebar.
 2. Search for **Volcano** and select the plugin published by **Kong**.
