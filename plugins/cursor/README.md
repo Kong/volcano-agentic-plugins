@@ -17,6 +17,17 @@ The plugin also includes:
 
 There is intentionally **no MCP config yet**; Volcano does not currently ship MCP.
 
+## Install from Cursor Marketplace
+
+Install [Volcano by Kong](https://cursor.com/marketplace/kong/volcano) from Cursor Marketplace:
+
+1. Open **Customize** in Cursor's sidebar.
+2. Search for **Volcano** and select the plugin published by **Kong**.
+3. Select **Install** and choose a project or user scope.
+4. Run `/install-volcano` in Cursor's Agent chat to set up the CLI through the bundled setup skill. It reuses a working CLI without automatic upgrades.
+
+Marketplace installation does not require a repository clone, shell installer, or VSIX file.
+
 ## Components
 
 | Path | Purpose |
@@ -39,38 +50,17 @@ pnpm check:skill-drift
 pnpm check:no-content-duplicates
 ```
 
-## Install locally (manual path)
+## Local development
 
-Cursor has no global `AGENTS.md`/rules file, so the host-agnostic bootstrap
-installer can only leave a *project-scoped* rule for Cursor. Installing the
-plugin into Cursor's local plugins directory instead gives the full, native
-experience across every project — the always-applied Volcano rule **and** the
-`volcano-*` skills, just like a Marketplace install.
-
-Run the installer (from a clone of this repo, or piped from GitHub):
+To test a checkout instead of the published plugin, run from the repository root:
 
 ```sh
 sh scripts/install-cursor-plugin.sh
-# …or without a local clone:
-curl -fsSL https://raw.githubusercontent.com/Kong/volcano-agentic-plugins/main/scripts/install-cursor-plugin.sh | sh
 ```
 
-It copies `plugins/cursor` into `~/.cursor/plugins/local/volcano` (override the
-target with `CURSOR_PLUGINS_DIR`). Restart Cursor or run **Developer: Reload
-Window** afterward.
+The script copies `plugins/cursor` into `~/.cursor/plugins/local/volcano`. Restart Cursor or run **Developer: Reload Window**, then check the plugin in **Customize**. Local plugin imports must be allowed. Repeat the copy and reload after editing plugin files. Submodules are needed only for CI drift checks, not for local loading.
 
-## Develop locally (symlink)
-
-For plugin development, symlink your working tree so edits are picked up on
-reload. Submodules are needed only for CI drift checks, not for local loading:
-
-```sh
-mkdir -p ~/.cursor/plugins/local
-rm -rf ~/.cursor/plugins/local/volcano
-ln -s "$(pwd)/plugins/cursor" ~/.cursor/plugins/local/volcano   # run from the repo root
-```
-
-Then restart Cursor or run **Developer: Reload Window**.
+Do not symlink an external checkout into the local plugins directory; Cursor skips symlinks whose targets are outside that directory. See [Cursor's local plugin instructions](https://cursor.com/docs/plugins#test-plugins-locally).
 
 ## Marketplace
 
@@ -80,8 +70,7 @@ This repo is a multi-IDE repository. The Cursor marketplace manifest is at:
 .cursor-plugin/marketplace.json
 ```
 
-Cursor Marketplace / Team Marketplace auto-refresh should track this repository
-and pick up changes pushed to the tracked branch.
+Team marketplaces imported from GitHub can enable Auto Refresh to track repository updates. Updates to the public listing are reviewed by Cursor before publication.
 
 ## Drift caveat
 
