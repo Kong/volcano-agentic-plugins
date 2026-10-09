@@ -19,7 +19,7 @@ There is intentionally **no MCP config yet**; Volcano does not currently ship MC
 
 ## Install from Cursor Marketplace
 
-Install [Volcano by Kong](https://cursor.com/marketplace/kong/volcano) from Cursor Marketplace:
+Install [Volcano by Kong](https://cursor.com/marketplace/kong/volcano) from Cursor Marketplace (recommended):
 
 1. Open **Customize** in Cursor's sidebar.
 2. Search for **Volcano** and select the plugin published by **Kong**.
@@ -50,15 +50,21 @@ pnpm check:skill-drift
 pnpm check:no-content-duplicates
 ```
 
-## Local development
+## Manual installation (optional)
 
-To test a checkout instead of the published plugin, run from the repository root:
+For installation outside Cursor Marketplace, clone this repository and run the local installer:
 
 ```sh
+git clone https://github.com/Kong/volcano-agentic-plugins.git
+cd volcano-agentic-plugins
 sh scripts/install-cursor-plugin.sh
 ```
 
-The script copies `plugins/cursor` into `~/.cursor/plugins/local/volcano`. Restart Cursor or run **Developer: Reload Window**, then check the plugin in **Customize**. Local plugin imports must be allowed. Repeat the copy and reload after editing plugin files. Submodules are needed only for CI drift checks, not for local loading.
+If you already have a checkout, run `sh scripts/install-cursor-plugin.sh` from its root.
+
+The script copies `plugins/cursor` into `~/.cursor/plugins/local/volcano`. Restart Cursor or run **Developer: Reload Window**, then check the plugin in **Customize**. Local plugin imports must be allowed. Run `/install-volcano` in Agent chat to set up the CLI through the bundled setup skill. Submodules are not needed for manual installation.
+
+For local development, repeat the copy and reload after editing plugin files.
 
 Do not symlink an external checkout into the local plugins directory; Cursor skips symlinks whose targets are outside that directory. See [Cursor's local plugin instructions](https://cursor.com/docs/plugins#test-plugins-locally).
 
