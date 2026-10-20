@@ -17,7 +17,7 @@ progress_published() {
     process.stdin.on("data", (d) => (s += d)).on("end", () => {
       try {
         const progress = JSON.parse(s).data.filter((m) => m.name === "progress");
-        process.exit(progress.some((m) => JSON.stringify(m.data).includes(process.env.NEEDLE)) ? 0 : 1);
+        process.exit(progress.some((m) => JSON.stringify(m.data ?? null).includes(process.env.NEEDLE)) ? 0 : 1);
       } catch {
         process.exit(1);
       }
