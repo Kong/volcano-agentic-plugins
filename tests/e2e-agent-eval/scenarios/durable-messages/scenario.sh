@@ -4,7 +4,7 @@
 # Needs @volcano.dev/sdk >= 2.1 (ctx.waitForMessage and ctx.publish), volcano CLI
 # >= 0.47.0 (older ones lack `durable messages`, so the send fails and reads as
 # the agent's failure), and a local image with durable messages.
-SCENARIO_PROMPT="Build a JavaScript Volcano durable function named 'publish-post' locally. It takes an input object with a 'post_id'. It first publishes a 'progress' message saying it is waiting, then waits up to one hour for a message named 'posted' whose data has a 'url' field, publishes a 'progress' message that includes that URL, and returns an object with a 'url' field holding it. Deploy it locally and test it end to end by sending a running execution its 'posted' message."
+SCENARIO_PROMPT="Build a JavaScript Volcano durable function named 'publish-post' locally. It takes an input object with an integer 'post_id'. It first publishes a 'progress' message saying it is waiting, then waits up to one hour for a message named 'posted' whose data has a 'url' field, publishes a 'progress' message that includes that URL, and returns an object with a 'url' field holding it. Deploy it locally and test it end to end by sending a running execution its 'posted' message."
 SCENARIO_TIMEOUT=900
 
 scenario_setup() { eval_reset_local_stack; }
