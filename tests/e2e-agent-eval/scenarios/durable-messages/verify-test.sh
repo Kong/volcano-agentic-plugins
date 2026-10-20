@@ -15,9 +15,10 @@ sleep() { :; }
 volcano() {
   case "$*" in
     'durable get publish-post') printf 'Status: active\n' ;;
-    'durable start publish-post --input '* ) printf 'ID: 11111111-1111-4111-8111-111111111111\n' ;;
-    'durable messages send publish-post '* ) [ "$SEND_OK" = true ] && touch "$SENT_FLAG" ;;
-    'durable executions get publish-post '* ) printf 'Status: succeeded\nResult: {\n  "url": "%s"\n}\n' "$RESULT_URL" ;;
+    'durable start publish-post --input '* ) printf 'ID: %s\n' "$ID" ;;
+    "durable messages send publish-post $ID posted --data {\"url\":\"$URL\"} --idempotency-key eval-$post_id")
+      [ "$SEND_OK" = true ] && touch "$SENT_FLAG" ;;
+    'durable executions get publish-post '* ) printf 'Status: succeeded\nResult: %s\n' "$RESULT" ;;
     'durable messages list publish-post '*'--direction out --json')
       local published=$BEFORE
       [ -f "$SENT_FLAG" ] && published=$AFTER
@@ -30,9 +31,13 @@ volcano() {
 RANDOM=1234
 post_id=$(( 10000 + RANDOM ))
 URL="https://example.com/posts/$post_id-$RANDOM$RANDOM"
+ID=11111111-1111-4111-8111-111111111111
 waiting='{"name":"progress","data":{"stage":"waiting"}}'
 done_='{"name":"progress","data":{"url":"'"$URL"'"}}'
 guessed='{"name":"progress","data":{"url":"https://example.com/posts/'"$post_id"'"}}'
+
+# A result as the CLI prints it: indented JSON.
+result() { printf '{\n  "url": "%s"\n}' "$1"; }
 
 check() {
   RANDOM=1234
@@ -42,14 +47,17 @@ check() {
   [ "$PASS" = "$1" ]
 }
 
-SEND_OK=true RESULT_URL=$URL BEFORE="$waiting" AFTER="$waiting,$done_" check true
-SEND_OK=false RESULT_URL=$URL BEFORE="$waiting" AFTER="$waiting,$done_" check false
-SEND_OK=true RESULT_URL=https://example.com/other BEFORE="$waiting" AFTER="$waiting,$done_" check false
-SEND_OK=true RESULT_URL=$URL BEFORE="$waiting" AFTER="$waiting" check false
-SEND_OK=true RESULT_URL=$URL BEFORE="$waiting" AFTER="$waiting,$waiting" check false
+SEND_OK=true RESULT=$(result "$URL") BEFORE="$waiting" AFTER="$waiting,$done_" check true
+SEND_OK=false RESULT=$(result "$URL") BEFORE="$waiting" AFTER="$waiting,$done_" check false
+SEND_OK=true RESULT=$(result https://example.com/other) BEFORE="$waiting" AFTER="$waiting,$done_" check false
+# The URL has to be the result's own field, not one nested inside it.
+SEND_OK=true RESULT=$(printf '{\n  "data": {\n    "url": "%s"\n  }\n}' "$URL") BEFORE="$waiting" AFTER="$waiting,$done_" check false
+SEND_OK=true RESULT=$(printf '[\n  {\n    "url": "%s"\n  }\n]' "$URL") BEFORE="$waiting" AFTER="$waiting,$done_" check false
+SEND_OK=true RESULT=$(result "$URL") BEFORE="$waiting" AFTER="$waiting" check false
+SEND_OK=true RESULT=$(result "$URL") BEFORE="$waiting" AFTER="$waiting,$waiting" check false
 # Waiting first and publishing both progress messages after the send.
-SEND_OK=true RESULT_URL=$URL BEFORE="" AFTER="$done_,$done_" check false
+SEND_OK=true RESULT=$(result "$URL") BEFORE="" AFTER="$done_,$done_" check false
 # A URL built from the input instead of read from the message.
-SEND_OK=true RESULT_URL="https://example.com/posts/$post_id" BEFORE="$waiting" AFTER="$waiting,$guessed" check false
+SEND_OK=true RESULT=$(result "https://example.com/posts/$post_id") BEFORE="$waiting" AFTER="$waiting,$guessed" check false
 printf '%s\n' 'await ctx.step("wait", poll);' >"$SANDBOX_DIR/volcano/functions/publish-post/index.js"
-SEND_OK=true RESULT_URL=$URL BEFORE="$waiting" AFTER="$waiting,$done_" check false
+SEND_OK=true RESULT=$(result "$URL") BEFORE="$waiting" AFTER="$waiting,$done_" check false

@@ -68,8 +68,11 @@ scenario_verify() {
       sleep 6
     done
     printf '\nExecution:\n%s\n' "$execution" >>"$artifact"
+    # The CLI prints the result indented two spaces a level, so this is a
+    # top-level field of an object result.
     if echo "$execution" | grep -qE '^Status:[[:space:]]+succeeded' &&
-       echo "$execution" | grep -qE "^[[:space:]]*\"url\":[[:space:]]*\"$url\""; then
+       echo "$execution" | grep -qE '^Result: [{]$' &&
+       echo "$execution" | grep -qE "^  \"url\": \"$url\",?$"; then
       succeeded="true"
     fi
     listed=$(volcano durable messages list publish-post "$id" --direction out --json 2>>"$artifact") || listed=""
