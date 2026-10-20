@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.42](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.41...v0.2.42) (2026-10-20)
+
+
+### Bug Fixes
+
+* **skills:** sync volcano-skills submodule to eadecde ([#147](https://github.com/Kong/volcano-agentic-plugins/issues/147)) ([1f29e85](https://github.com/Kong/volcano-agentic-plugins/commit/1f29e85330abb3f20a8b34a12cf2a9641ebbf34e))
+
 ## [0.2.41](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.40...v0.2.41) (2026-10-15)
 
 
