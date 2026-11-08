@@ -59,7 +59,6 @@ try {
   }
   writeFileSync(path.join(staging, "plugin.json"), JSON.stringify(portable, null, 2) + "\n");
   writeFileSync(path.join(staging, ".codex-plugin/plugin.json"), JSON.stringify({ ...native, version }, null, 2) + "\n");
-  execFileSync(process.execPath, [path.join(staging, "skills/scripts/check-skills.mjs")], { stdio: "inherit" });
   // zip is available on the supported macOS/Linux packaging hosts and in CI.
   execFileSync("zip", ["-q", "-X", "-r", "package.zip", "plugin.json", ".codex-plugin", "skills", "assets", "LICENSE", "README.md"], { cwd: staging });
   const outputDir = path.join(root, "dist");

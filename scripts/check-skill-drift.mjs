@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isExcluded } from "./skill-sync-exclusions.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const sourceDir = path.join(root, "sources/volcano-skills");
@@ -10,14 +11,12 @@ const pluginSkillDirs = [
   "plugins/claude-desktop/skills",
   "plugins/codex/skills",
 ];
-// .git/.DS_Store are never meaningful content on either side. .github is
-// excluded ONLY from the source walk below (kept in sync with
-// sync-skills-from-source.mjs's exclusion there) — it must stay INCLUDED in
-// the plugin-side walk, or a stray/reintroduced .github in a plugin copy
-// would be silently invisible to both the "missing" and "extra file" checks
-// instead of being flagged as an extra file.
+// The source walk drops everything sync-skills-from-source.mjs leaves out
+// (shared list in skill-sync-exclusions.mjs). The plugin-side walk drops only
+// .git/.DS_Store, so a stray or reintroduced .github, scripts/, or tests/ in a
+// plugin copy is flagged as an extra file instead of being silently invisible.
 const ALWAYS_EXCLUDED_BASENAMES = new Set([".git", ".DS_Store"]);
-const SOURCE_EXCLUDED_BASENAMES = new Set([...ALWAYS_EXCLUDED_BASENAMES, ".github"]);
+const pluginExcluded = (relativePath) => relativePath.split("/").some((part) => ALWAYS_EXCLUDED_BASENAMES.has(part));
 
 function rel(file) {
   return path.relative(root, file).split(path.sep).join("/");
@@ -28,8 +27,8 @@ function walkFiles(dir, excluded, base = dir) {
 
   const files = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (excluded.has(entry.name)) continue;
     const full = path.join(dir, entry.name);
+    if (excluded(path.relative(base, full).split(path.sep).join("/"))) continue;
     if (entry.isDirectory()) {
       files.push(...walkFiles(full, excluded, base));
     } else if (entry.isFile()) {
@@ -51,7 +50,7 @@ const errors = [];
 let sourceFiles = [];
 
 try {
-  sourceFiles = walkFiles(sourceDir, SOURCE_EXCLUDED_BASENAMES);
+  sourceFiles = walkFiles(sourceDir, isExcluded);
   if (sourceFiles.length === 0) {
     errors.push("sources/volcano-skills contains no files; run git submodule update --init --recursive");
   }
@@ -64,7 +63,7 @@ for (const pluginRel of pluginSkillDirs) {
   let pluginFiles = [];
 
   try {
-    pluginFiles = walkFiles(pluginDir, ALWAYS_EXCLUDED_BASENAMES);
+    pluginFiles = walkFiles(pluginDir, pluginExcluded);
   } catch (error) {
     errors.push(error instanceof Error ? error.message : String(error));
     continue;

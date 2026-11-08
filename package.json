@@ -17,6 +17,7 @@
     "check:no-content-duplicates": "node scripts/check-no-content-duplicates.mjs",
     "check:skill-submodules": "node scripts/check-skill-submodules.mjs",
     "check:skill-drift": "node scripts/check-skill-drift.mjs",
+    "check:skills": "node sources/volcano-skills/scripts/check-skills.mjs",
     "sync:skills": "node scripts/sync-skills-from-source.mjs",
     "check:claude-desktop": "node scripts/check-claude-desktop.mjs",
     "check:codex": "node scripts/check-codex.mjs",

@@ -6,6 +6,7 @@ PNPM ?= pnpm
 test:
 	$(PNPM) check:skill-submodules
 	$(PNPM) check:skill-drift
+	$(PNPM) check:skills
 	$(PNPM) check:no-content-duplicates
 	$(PNPM) check:install-entrypoints
 	$(PNPM) check:marketplace-assets

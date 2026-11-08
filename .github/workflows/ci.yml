@@ -39,6 +39,9 @@ jobs:
       - name: Check materialized plugin skills match canonical source
         run: pnpm check:skill-drift
 
+      - name: Validate the canonical skill catalog
+        run: pnpm check:skills
+
       - name: Check canonical content only appears in approved plugin skill directories
         run: pnpm check:no-content-duplicates
 

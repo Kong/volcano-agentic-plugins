@@ -22,7 +22,6 @@ test("public ZIP uses committed files only and rejects committed symlinks", () =
     };
     put("plugins/codex/.codex-plugin/plugin.json", JSON.stringify(manifest));
     put("plugins/codex/skills/example/SKILL.md", "reviewed skill");
-    put("plugins/codex/skills/scripts/check-skills.mjs", "// Catalog validation stub: this fixture tests archive boundaries.\n");
     put("plugins/codex/assets/icon.svg", "<svg/>");
     put("plugins/codex/LICENSE", "reviewed license");
     put("plugins/codex/README.md", "reviewed readme");
