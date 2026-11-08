@@ -89,8 +89,11 @@ assert(claudeCode.icon === "./assets/volcano_256.png", "Claude Code manifest mus
 assertFile(path.join("plugins/claude-code", claudeCode.icon));
 const claudeCodeIcon = pngSize(path.join("plugins/claude-code", claudeCode.icon));
 assert(claudeCodeIcon.width === 256 && claudeCodeIcon.height === 256, "Claude Code icon must be 256x256 PNG");
-for (const file of ["volcano_128.png", "volcano_dark_16.svg", "volcano_light_16.svg"]) {
-  assertFile(`plugins/claude-code/assets/${file}`);
+assertFile("plugins/claude-code/assets/volcano_128.png");
+// The Claude Code plugin directory refuses SVG from unverified publishers, so
+// the Claude Code plugin ships PNG icons only.
+for (const file of ["volcano_dark_16.svg", "volcano_light_16.svg"]) {
+  assert(!existsSync(`plugins/claude-code/assets/${file}`), `Claude Code plugin must not ship ${file}`);
 }
 assert(claudeCode.license === "Apache-2.0", "Claude Code manifest must declare Apache-2.0");
 assertUrl(claudeCode.homepage, "Claude Code homepage");
