@@ -39,14 +39,27 @@ git submodule update --remote sources/volcano-skills
 pnpm sync:skills
 pnpm check:skill-submodules
 pnpm check:skill-drift
+pnpm check:skills
 pnpm check:no-content-duplicates
 pnpm check:install-entrypoints
+pnpm check:claude-code-allowlist
 ```
 
 Then review and commit both:
 
 - the `sources/volcano-skills` gitlink update
 - the materialized changes under every `plugins/<ide>/skills`
+
+`pnpm sync:skills` leaves out the skills repo's own tooling (root `scripts/`
+and `tests/`) and `.github`. The list lives in
+`scripts/skill-sync-exclusions.mjs`, shared with `check:skill-drift`. Run
+`pnpm check:skills` to validate the catalog in `sources/volcano-skills`.
+
+The Claude Code plugin directory refuses any file that isn't Markdown, text,
+JSON, YAML, or a PNG/JPEG/GIF/WebP/ICO image, or that starts with `#!`, unless
+the publisher is a Verified organization. `pnpm check:claude-code-allowlist`
+enforces this on `plugins/claude-code`. The Claude Code plugin ships no SVG
+icons for the same reason.
 
 Do not restore plugin-local skill submodules. `pnpm check:skill-submodules`
 rejects that.
@@ -195,8 +208,6 @@ Tracked asset locations:
 - `plugins/codex/assets/volcano_light_16.svg` — Codex light theme small icon
 - `plugins/claude-code/assets/volcano_256.png` — Claude Code icon, 256x256 PNG
 - `plugins/claude-code/assets/volcano_128.png` — Claude Code icon, 128x128 PNG
-- `plugins/claude-code/assets/volcano_dark_16.svg` — Claude Code dark theme small icon
-- `plugins/claude-code/assets/volcano_light_16.svg` — Claude Code light theme small icon
 - `plugins/claude-desktop/assets/volcano_256.png` — Claude Desktop MCPB icon, 256x256 PNG
 - `plugins/claude-desktop/assets/volcano_128.png` — Claude Desktop icon, 128x128 PNG
 - `plugins/claude-desktop/assets/volcano_dark_16.svg` — Claude Desktop dark theme small icon
