@@ -57,6 +57,9 @@ jobs:
       - name: Check marketplace assets and metadata
         run: pnpm check:marketplace-assets
 
+      - name: Check Claude Code plugin ships only directory-allowed file types
+        run: pnpm check:claude-code-allowlist
+
       - name: Check public package isolation
         run: pnpm check:codex-package
 

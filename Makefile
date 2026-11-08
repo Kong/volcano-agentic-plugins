@@ -10,6 +10,7 @@ test:
 	$(PNPM) check:no-content-duplicates
 	$(PNPM) check:install-entrypoints
 	$(PNPM) check:marketplace-assets
+	$(PNPM) check:claude-code-allowlist
 	$(PNPM) check:codex
 	$(PNPM) check:codex-package
 	$(PNPM) check:claude-desktop
