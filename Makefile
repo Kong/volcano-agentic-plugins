@@ -6,11 +6,14 @@ PNPM ?= pnpm
 test:
 	$(PNPM) check:skill-submodules
 	$(PNPM) check:skill-drift
+	$(PNPM) check:skills
 	$(PNPM) check:no-content-duplicates
 	$(PNPM) check:install-entrypoints
 	$(PNPM) check:marketplace-assets
+	$(PNPM) check:claude-code-allowlist
 	$(PNPM) check:codex
 	$(PNPM) check:codex-package
+	$(PNPM) test:scripts
 	$(PNPM) check:claude-desktop
 	$(PNPM) -r typecheck
 	$(PNPM) test:core

@@ -39,6 +39,9 @@ jobs:
       - name: Check materialized plugin skills match canonical source
         run: pnpm check:skill-drift
 
+      - name: Validate the canonical skill catalog
+        run: pnpm check:skills
+
       - name: Check canonical content only appears in approved plugin skill directories
         run: pnpm check:no-content-duplicates
 
@@ -54,8 +57,14 @@ jobs:
       - name: Check marketplace assets and metadata
         run: pnpm check:marketplace-assets
 
+      - name: Check Claude Code plugin ships only directory-allowed file types
+        run: pnpm check:claude-code-allowlist
+
       - name: Check public package isolation
         run: pnpm check:codex-package
+
+      - name: Test skill sync and Claude Code allowlist scripts
+        run: pnpm test:scripts
 
       - name: Package public Codex plugin
         run: pnpm package:codex
