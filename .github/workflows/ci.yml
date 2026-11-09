@@ -63,6 +63,9 @@ jobs:
       - name: Check public package isolation
         run: pnpm check:codex-package
 
+      - name: Test skill sync and Claude Code allowlist scripts
+        run: pnpm test:scripts
+
       - name: Package public Codex plugin
         run: pnpm package:codex
 

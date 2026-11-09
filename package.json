@@ -27,7 +27,8 @@
     "package:vscode": "pnpm --filter volcano package",
     "package:claude-desktop": "npx --yes @anthropic-ai/mcpb validate plugins/claude-desktop/manifest.json && rm -f /tmp/volcano-claude-desktop.mcpb && npx --yes @anthropic-ai/mcpb pack plugins/claude-desktop /tmp/volcano-claude-desktop.mcpb",
     "package:codex": "node scripts/package-codex.mjs",
-    "check:codex-package": "node --test scripts/package-codex.test.mjs"
+    "check:codex-package": "node --test scripts/package-codex.test.mjs",
+    "test:scripts": "node --test scripts/check-claude-code-allowlist.test.mjs scripts/skill-sync-contents.test.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

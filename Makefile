@@ -13,6 +13,7 @@ test:
 	$(PNPM) check:claude-code-allowlist
 	$(PNPM) check:codex
 	$(PNPM) check:codex-package
+	$(PNPM) test:scripts
 	$(PNPM) check:claude-desktop
 	$(PNPM) -r typecheck
 	$(PNPM) test:core
