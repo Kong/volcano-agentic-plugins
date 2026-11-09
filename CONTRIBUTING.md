@@ -50,9 +50,11 @@ Then review and commit both:
 - the `sources/volcano-skills` gitlink update
 - the materialized changes under every `plugins/<ide>/skills`
 
-`pnpm sync:skills` leaves out the skills repo's own tooling (root `scripts/`
-and `tests/`) and `.github`. The list lives in
-`scripts/skill-sync-exclusions.mjs`, shared with `check:skill-drift`. Run
+`pnpm sync:skills` copies only the catalog: `index.json`, `AGENTS.md`, and the
+skill folders `index.json` lists. The skills repo's own tooling (its root
+`scripts/`, `tests/`, `.github`, and anything else at its root) stays out. The
+rule lives in `scripts/skill-sync-contents.mjs`, shared with
+`check:skill-drift` and `package:codex`. Run
 `pnpm check:skills` to validate the catalog in `sources/volcano-skills`.
 
 The Claude Code plugin directory refuses any file that isn't Markdown, text,
