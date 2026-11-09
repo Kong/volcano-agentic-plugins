@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { EXCLUDED_BASENAMES } from "./skill-sync-contents.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // Freeze one committed tree. Never recurse through a developer worktree: even
@@ -21,7 +22,7 @@ for (const record of tree.split("\0").filter(Boolean)) {
     throw new Error(`Public package requires regular committed files: ${filename}`);
   }
   const relative = filename.slice(prefix.length);
-  if (relative.split("/").some((part) => [".git", ".github", ".DS_Store"].includes(part))) continue;
+  if (relative.split("/").some((part) => EXCLUDED_BASENAMES.has(part))) continue;
   files.set(relative, { sha, mode });
 }
 function blob(relative) {

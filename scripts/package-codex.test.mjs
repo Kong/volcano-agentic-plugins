@@ -16,6 +16,7 @@ test("public ZIP uses committed files only and rejects committed symlinks", () =
   const git = (...args) => execFileSync("git", ["-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false", "-c", "user.name=Packaging Test", "-c", "user.email=packaging@example.invalid", ...args], { cwd: root, stdio: "pipe" });
   try {
     put("scripts/package-codex.mjs", readFileSync(new URL("./package-codex.mjs", import.meta.url)));
+    put("scripts/skill-sync-contents.mjs", readFileSync(new URL("./skill-sync-contents.mjs", import.meta.url)));
     const manifest = {
       name: "volcano", version: "1.2.3", description: "Test package", skills: "./skills/",
       interface: { displayName: "Volcano" }, review: { commerce: false }, publication: { countries: [] },
