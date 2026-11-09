@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.51](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.50...v0.2.51) (2026-11-09)
+
+
+### Bug Fixes
+
+* **claude-code:** ship only plugin directory allowed file types ([#166](https://github.com/Kong/volcano-agentic-plugins/issues/166)) ([16ba10a](https://github.com/Kong/volcano-agentic-plugins/commit/16ba10aab4bab20a36ac57f55062e74eab92471a))
+
 ## [0.2.50](https://github.com/Kong/volcano-agentic-plugins/compare/v0.2.49...v0.2.50) (2026-11-07)
 
 
